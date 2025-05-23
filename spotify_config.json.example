@@ -1,0 +1,75 @@
+{
+    /***** API和网络相关配置 *****/
+    
+    /* 并发API请求数量 - 更高的值可以加快处理速度，但可能导致API限制 */
+    "API_CONCURRENT_REQUESTS": 10,
+    
+    /* API速率限制重试次数 - 达到API限制时重试的最大次数 */
+    "API_RATE_LIMIT_RETRIES": 5,
+    
+    /* 重试基础延迟（秒）- 初始重试延迟时间 */
+    "API_BASE_DELAY": 0.5,
+    
+    /* 最大重试延迟（秒）- 指数退避的最大延迟时间 */
+    "API_MAX_DELAY": 10.0,
+    
+    /***** 搜索相关配置 *****/
+    
+    /* 每次搜索返回的最大结果数量 - 影响匹配准确性和API请求负载 */
+    "SPOTIFY_SEARCH_LIMIT": 3,
+    
+    /***** 批处理相关配置 *****/
+    
+    /* 批处理大小 - 每批处理的歌曲数量 */
+    "BATCH_SIZE": 50,
+    
+    /* 并发限制 - 同时处理的最大歌曲数量 */
+    "CONCURRENCY_LIMIT": 10,
+    
+    /***** 日志相关配置 *****/
+    
+    /* 日志级别 - 可选值: DEBUG, INFO, WARNING, ERROR, CRITICAL */
+    "LOG_LEVEL": "INFO",
+    
+    /* 是否输出日志到文件 - true表示启用文件日志 */
+    "LOG_TO_FILE": false,
+    
+    /* 日志文件路径 - 当LOG_TO_FILE为true时使用 */
+    "LOG_FILE_PATH": "spotify_importer.log",
+    
+    /***** 匹配算法相关配置 *****/
+    
+    /* 标题匹配权重 - 在匹配算法中标题的权重系数 */
+    "TITLE_WEIGHT": 0.7,
+    
+    /* 艺术家匹配权重 - 在匹配算法中艺术家的权重系数（注意：TITLE_WEIGHT + ARTIST_WEIGHT应等于1.0）*/
+    "ARTIST_WEIGHT": 0.3,
+    
+    /* 匹配阈值 - 歌曲被视为匹配的最低分数 */
+    "MATCH_THRESHOLD": 70.0,
+    
+    /* 括号内容匹配权重 - 评估括号内文本（如(Live), [Remix]等）时的权重系数 */
+    "BRACKET_WEIGHT": 0.3,
+    
+    /* 关键词匹配加分 - 当特定关键词匹配时的额外分数 */
+    "KEYWORD_BONUS": 5.0,
+    
+    /* 括号内容匹配阈值 - 括号内容被视为匹配的最低分数 */
+    "BRACKET_THRESHOLD": 70.0,
+    
+    /***** 两阶段匹配策略配置 *****/
+    
+    /* 第一阶段匹配阈值 - 进入第二阶段匹配的最低分数，通常低于MATCH_THRESHOLD */
+    "FIRST_STAGE_THRESHOLD": 60.0,
+    
+    /* 第二阶段匹配阈值 - 最终匹配决策的分数阈值，通常等于MATCH_THRESHOLD */
+    "SECOND_STAGE_THRESHOLD": 70.0,
+    
+    /***** 缓存相关配置 *****/
+    
+    /* 是否启用缓存 - true表示启用缓存以提高性能 */
+    "CACHE_ENABLED": true,
+    
+    /* 缓存目录 - 存储缓存文件的目录路径 */
+    "CACHE_DIR": ".cache"
+} 

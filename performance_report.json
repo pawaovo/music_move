@@ -1,0 +1,116 @@
+{
+  "timestamp": "2025-05-20T14:32:34.720661",
+  "input_file": "yunmusic.txt",
+  "song_count": 439,
+  "results": {
+    "text_normalization": {
+      "total_samples": 956,
+      "avg_time": 0.002370294916081129,
+      "min_time": 0.0009887218475341797,
+      "max_time": 0.007609367370605469,
+      "median_time": 0.0020029544830322266,
+      "memory_usage_mb": 0.804905891418457,
+      "profile_result": "         18140 function calls (18137 primitive calls) in 0.007 seconds\n\n   Ordered by: cumulative time\n   List reduced from 67 to 20 due to restriction <20>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.007    0.007 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:309(normalize_text)\n        1    0.000    0.000    0.007    0.007 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:67(__init__)\n        1    0.000    0.000    0.007    0.007 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:36(__init__)\n        1    0.000    0.000    0.007    0.007 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:95(_init_dict)\n      2/1    0.004    0.002    0.006    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:122(_add_dictionaries)\n     4390    0.001    0.000    0.001    0.000 {method 'split' of 'str' objects}\n     8821    0.001    0.000    0.001    0.000 {built-in method builtins.len}\n     4391    0.001    0.000    0.001    0.000 {method 'strip' of 'str' objects}\n        1    0.000    0.000    0.000    0.000 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:263(normalize)\n        1    0.000    0.000    0.000    0.000 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:119(to_simplified_chinese)\n        1    0.000    0.000    0.000    0.000 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:57(convert)\n        3    0.000    0.000    0.000    0.000 {built-in method io.open}\n        8    0.000    0.000    0.000    0.000 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:80(_convert)\n        8    0.000    0.000    0.000    0.000 <frozen codecs>:319(decode)\n        8    0.000    0.000    0.000    0.000 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:208(create_parse_tree)\n        8    0.000    0.000    0.000    0.000 {built-in method _codecs.utf_8_decode}\n        3    0.000    0.000    0.000    0.000 {method '__exit__' of '_io._IOBase' objects}\n        1    0.000    0.000    0.000    0.000 D:\\python\\Lib\\json\\__init__.py:274(load)\n        1    0.000    0.000    0.000    0.000 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:81(<dictcomp>)\n       21    0.000    0.000    0.000    0.000 D:\\python\\Lib\\re\\__init__.py:225(compile)\n\n\n"
+    },
+    "string_matching": {
+      "total_samples": 100,
+      "avg_time": 0.09943805456161499,
+      "min_time": 0.08077025413513184,
+      "max_time": 0.2131202220916748,
+      "median_time": 0.09116017818450928,
+      "memory_usage_mb": 0.8281774520874023,
+      "candidate_count_times": {
+        "5": 0.05009387731552124,
+        "10": 0.1027269721031189,
+        "20": 0.18840162754058837,
+        "50": 0.46722662448883057
+      },
+      "profile_result": "         902566 function calls (902406 primitive calls) in 0.312 seconds\n\n   Ordered by: cumulative time\n   List reduced from 125 to 20 due to restriction <20>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.312    0.312 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:158(match)\n       50    0.005    0.000    0.309    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:41(normalize_for_matching)\n       50    0.000    0.000    0.305    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:309(normalize_text)\n       50    0.000    0.000    0.298    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:67(__init__)\n       50    0.000    0.000    0.295    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:36(__init__)\n       50    0.001    0.000    0.295    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:95(_init_dict)\n   100/50    0.187    0.002    0.284    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:122(_add_dictionaries)\n       10    0.000    0.000    0.186    0.019 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:88(calculate_artists_similarity)\n       10    0.000    0.000    0.126    0.013 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:54(calculate_title_similarity)\n       10    0.000    0.000    0.123    0.012 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:105(<listcomp>)\n       10    0.000    0.000    0.062    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:106(<listcomp>)\n   219520    0.038    0.000    0.038    0.000 {method 'split' of 'str' objects}\n   440861    0.025    0.000    0.025    0.000 {built-in method builtins.len}\n   219680    0.023    0.000    0.023    0.000 {method 'strip' of 'str' objects}\n      150    0.007    0.000    0.008    0.000 {built-in method io.open}\n       50    0.000    0.000    0.006    0.000 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:263(normalize)\n      400    0.001    0.000    0.005    0.000 <frozen codecs>:319(decode)\n       50    0.000    0.000    0.004    0.000 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:119(to_simplified_chinese)\n       50    0.000    0.000    0.004    0.000 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:57(convert)\n      400    0.004    0.000    0.004    0.000 {built-in method _codecs.utf_8_decode}\n\n\n"
+    },
+    "enhanced_matching": {
+      "total_samples": 100,
+      "avg_time": 0.0921429944038391,
+      "min_time": 0.08199954032897949,
+      "max_time": 0.14464187622070312,
+      "median_time": 0.08699393272399902,
+      "memory_usage_mb": 1.5734424591064453,
+      "threshold_times": {
+        "50_60": 0.12337357997894287,
+        "60_70": 0.14568995237350463,
+        "70_80": 0.15919870138168335,
+        "80_90": 0.11016860008239746
+      },
+      "profile_result": "         920423 function calls (920260 primitive calls) in 0.340 seconds\n\n   Ordered by: cumulative time\n   List reduced from 133 to 20 due to restriction <20>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.340    0.340 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\enhanced_matcher.py:230(get_enhanced_match)\n        1    0.000    0.000    0.333    0.333 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\enhanced_matcher.py:213(get_best_match)\n        1    0.000    0.000    0.333    0.333 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\enhanced_matcher.py:183(match)\n        1    0.000    0.000    0.333    0.333 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\enhanced_matcher.py:64(first_stage_match)\n        1    0.000    0.000    0.333    0.333 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:158(match)\n       50    0.006    0.000    0.330    0.007 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:41(normalize_for_matching)\n       50    0.000    0.000    0.324    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:309(normalize_text)\n       51    0.001    0.000    0.323    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:67(__init__)\n       51    0.000    0.000    0.320    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:36(__init__)\n       51    0.001    0.000    0.319    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:95(_init_dict)\n   102/51    0.201    0.002    0.306    0.006 D:\\python\\Lib\\site-packages\\opencc\\opencc.py:122(_add_dictionaries)\n       10    0.000    0.000    0.201    0.020 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:88(calculate_artists_similarity)\n       10    0.000    0.000    0.136    0.014 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:105(<listcomp>)\n       10    0.000    0.000    0.132    0.013 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:54(calculate_title_similarity)\n       10    0.000    0.000    0.064    0.006 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\string_matcher.py:106(<listcomp>)\n   223910    0.042    0.000    0.042    0.000 {method 'split' of 'str' objects}\n   449669    0.026    0.000    0.026    0.000 {built-in method builtins.len}\n   224070    0.025    0.000    0.025    0.000 {method 'strip' of 'str' objects}\n      153    0.009    0.000    0.009    0.000 {built-in method io.open}\n       50    0.000    0.000    0.007    0.000 d:\\ai\\music_move\\spotify_playlist_importer\\spotify_playlist_importer\\utils\\text_normalizer.py:263(normalize)\n\n\n"
+    },
+    "batch_scaling": {
+      "batch_times": {
+        "10": {
+          "total_time": 1.1339361667633057,
+          "avg_time_per_song": 0.11339361667633056
+        },
+        "50": {
+          "total_time": 5.7905964851379395,
+          "avg_time_per_song": 0.11581192970275879
+        },
+        "100": {
+          "total_time": 11.239197254180908,
+          "avg_time_per_song": 0.11239197254180908
+        },
+        "200": {
+          "total_time": 24.28863286972046,
+          "avg_time_per_song": 0.12144316434860229
+        },
+        "400": {
+          "total_time": 54.89126420021057,
+          "avg_time_per_song": 0.13722816050052644
+        }
+      },
+      "scaling_factors": {
+        "50": {
+          "ideal_factor": 5.0,
+          "actual_factor": 5.106633560923056,
+          "efficiency": 0.9791186190176173
+        },
+        "100": {
+          "ideal_factor": 10.0,
+          "actual_factor": 9.911666620760446,
+          "efficiency": 1.0089120611718856
+        },
+        "200": {
+          "ideal_factor": 20.0,
+          "actual_factor": 21.41975322918719,
+          "efficiency": 0.9337175730272843
+        },
+        "400": {
+          "ideal_factor": 40.0,
+          "actual_factor": 48.40771977217339,
+          "efficiency": 0.8263144843065616
+        }
+      }
+    },
+    "end_to_end": {
+      "total_songs": 50,
+      "total_duration": 16.205673694610596,
+      "avg_time_per_song": 0.3241134738922119,
+      "song_times": {
+        "avg": 0.3241134738922119,
+        "min": 0.23702049255371094,
+        "max": 0.6160659790039062,
+        "median": 0.3141411542892456
+      },
+      "match_rate": 1.0
+    }
+  },
+  "optimization_suggestions": [
+    "考虑对文本归一化函数进行缓存，避免对相同输入重复处理",
+    "简繁体转换是文本归一化的性能瓶颈之一，考虑仅在必要时启用此功能，或使用更高效的实现",
+    "字符串匹配算法性能可以进一步优化，考虑使用更高效的相似度计算方法",
+    "候选数量显著影响匹配性能，建议限制初始候选数量，或实施早期剪枝策略",
+    "增强匹配算法执行时间较长，考虑优化或简化计算逻辑",
+    "考虑使用并行处理同时处理多首歌曲，特别是在批量导入场景",
+    "对于常见的艺术家和歌曲名称组合，可以实现结果缓存以减少计算",
+    "考虑使用更精细的日志级别控制，在生产环境中减少不必要的日志输出",
+    "评估是否可以使用更高效的字符串相似度算法，如使用编辑距离的近似算法",
+    "在用户界面中显示进度指示器，改善用户体验"
+  ]
+}
