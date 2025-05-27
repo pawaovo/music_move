@@ -1,0 +1,17 @@
+# 歌曲匹配报告
+
+生成时间: 2025-05-23 18:04:48
+总计: 1 首歌曲
+成功匹配: 1 首 (100.0% 成功率)
+匹配失败: 0 首
+
+## 详细匹配结果
+
+### 1. Call of Silence x YouSeeBIGGIRL - EYAir
+
+原曲: Call of Silence x YouSeeBIGGIRL - EYAir
+匹配: Summer Breeze - EYAir
+分数: 0.00分 低置信度匹配: 是
+
+---
+
