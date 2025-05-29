@@ -60,7 +60,7 @@ for path in sys.path:
 
 # 获取服务器配置
 host = os.environ.get("API_HOST", "0.0.0.0")
-port = int(os.environ.get("API_PORT", "8888"))
+port = int(os.environ.get("PORT", os.environ.get("API_PORT", "8888")))
 debug = os.environ.get("API_DEBUG", "").lower() in ("true", "1", "yes")
 
 logger.info("正在启动API服务器...")
