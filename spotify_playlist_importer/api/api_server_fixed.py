@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi import status
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +29,29 @@ app = FastAPI(
     description="Spotify播放列表导入工具API",
     version="1.0.0"
 )
+
+# 自定义中间件，处理CORS预检请求
+class PreflightCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS":
+            logger.info(f"处理预检请求: {request.url.path}")
+            # 返回预检响应
+            response = Response(
+                status_code=200,
+                headers={
+                    "Access-Control-Allow-Origin": FRONTEND_URL,
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Max-Age": "3600",
+                }
+            )
+            return response
+        # 处理非预检请求
+        return await call_next(request)
+
+# 添加自定义中间件
+app.add_middleware(PreflightCORSMiddleware)
 
 # 配置CORS
 app.add_middleware(
