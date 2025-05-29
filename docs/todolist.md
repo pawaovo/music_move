@@ -809,3 +809,69 @@ Based on `docs/project_upgrade_plan.md` (Version 1.2)
     - [ ] 确保此修改未对其他匹配逻辑或功能产生负面影响。
 
 ---
+
+## XVII. 用户信息与敏感信息处理优化 (Stage 17)
+
+**核心目标**: 调整项目以符合网页服务的要求，不长期存储用户信息，并通过配置文件管理敏感信息，为项目开源做准备。
+
+### 17.1 用户信息存储优化
+- [ ] **17.1.1: 审阅后端代码，识别用户信息持久化存储点:**
+    - [ ] 检查 `spotify_playlist_importer/spotify/auth_manager.py` (或相关认证管理模块) 中 OAuth 令牌的缓存机制。
+    - [ ] 确认令牌缓存路径 (例如 `auth_manager.cache_handler.cache_path`) 指向的是临时存储还是持久化存储。
+- [ ] **17.1.2: 修改令牌缓存策略:**
+    - [ ] **方案A (推荐 - 内存缓存):** 将令牌缓存从文件系统迁移到内存缓存 (例如，使用简单的字典或更健壮的内存缓存库如 `cachetools`)。
+        - [ ] 为内存缓存中的令牌设置合理的、较短的过期时间 (例如，与Spotify令牌有效期一致或略短，如1小时)。
+    - [ ] **方案B (临时文件缓存优化):** 如果暂时保留文件缓存，实现会话结束或令牌过期后自动清理缓存文件的逻辑。
+        - [ ] 确保缓存文件权限安全。
+- [ ] **17.1.3: 审阅会话管理机制 (`spotify_playlist_importer/api/routes_fixed.py`):**
+    - [ ] 确认 `SESSION_COOKIE_NAME` (`spotify_session_id`) 的 `max_age` (当前为30天) 是否符合"不长期存储用户信息"的要求。用户接受了30天有效期，此项可标记为已确认。
+    - [x] (已确认) 用户接受 Cookie 有效期为30天。
+    - [ ] 评估是否需要更短的会话有效期，或在用户登出时强制清除会话及关联的令牌缓存（如果已实现登出功能）。
+- [ ] **17.1.4: 优化临时文件处理:**
+    - [ ] 检查 `spotify_playlist_importer/api/routes_fixed.py` 中 `/api/process-songs` 端点使用 `tempfile.NamedTemporaryFile` 的逻辑。
+    - [ ] 确保临时文件在使用完毕后被可靠删除 (目前通过 `try...finally` 和 `os.unlink` 实现，是良好实践)。
+    - [ ] 考虑是否可以将此处的歌曲列表处理完全在内存中进行，以避免创建临时文件（取决于歌曲列表大小和内存限制）。
+
+### 17.2 敏感信息配置化 (为开源准备)
+- [ ] **17.2.1: 识别项目中的硬编码敏感信息:**
+    - [ ] **Spotify API 凭证**: 检查 `spotify_playlist_importer/spotify/client_manager.py` (或 `auth.py`) 中 `SpotifyOAuth` 或 `SpotifyClientCredentials` 初始化时 `client_id` 和 `client_secret` 的来源。
+    - [ ] **后端重定向 URI**: 检查 `spotify_playlist_importer/spotify/client_manager.py` (或 `auth.py`) 中 `SpotifyOAuth` 初始化时 `redirect_uri` 的来源。
+    - [ ] **前端 API 基地址**: `music_move/merged/services/api.ts` 中的 `API_BASE_URL` 已使用环境变量，是良好实践。
+    - [ ] **其他可能的密钥或配置**: 全局搜索项目中类似密码、API Key、特定URL等字符串。
+- [ ] **17.2.2: 实现通过环境变量加载敏感信息:**
+    - [ ] **后端 Python:**
+        - [ ] 使用 `python-dotenv` 库在开发环境加载 `.env` 文件中的环境变量。
+        - [ ] 修改相关代码 (如 `client_manager.py`)，使其从 `os.environ.get()` 读取 `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI` 等。
+    - [ ] **前端 Next.js:**
+        - [ ] `NEXT_PUBLIC_API_BASE_URL` 已按规范处理。
+- [ ] **17.2.3: 创建配置文件模板:**
+    - [ ] 在项目根目录或配置目录下创建 `.env.example` 文件。
+    - [ ] 列出所有必需的环境变量及其用途说明，例如:
+      ```env
+      # Spotify App Credentials
+      SPOTIFY_CLIENT_ID="YOUR_SPOTIFY_CLIENT_ID"
+      SPOTIFY_CLIENT_SECRET="YOUR_SPOTIFY_CLIENT_SECRET"
+      SPOTIFY_REDIRECT_URI="http://127.0.0.1:8888/callback" # For backend API
+
+      # Frontend Configuration (if any beyond API URL)
+      # NEXT_PUBLIC_API_BASE_URL="http://localhost:8888" # Already handled
+
+      # Backend API Server Configuration
+      # FRONTEND_URL="http://localhost:3000" # Used by backend for redirects
+      ```
+- [ ] **17.2.4: 更新 `.gitignore`:
+    - [ ] 确保 `.env` (以及可能的其他本地配置文件如 `spotify_config.local.json` 如果有的话) 被添加到 `.gitignore` 文件中，防止敏感信息提交到版本库。
+- [ ] **17.2.5: 更新项目文档 (README.md, 部署文档):**
+    - [ ] 详细说明项目依赖的环境变量。
+    - [ ] 指导用户如何创建和配置他们自己的 `.env` 文件或在部署环境中设置这些变量。
+
+### 17.3 测试与验证
+- [ ] **17.3.1: 测试用户信息非持久化存储:**
+    - [ ] 验证令牌缓存是否按预期工作（例如，在内存中且有过期时间，或临时文件被正确清理）。
+    - [ ] 验证会话管理是否符合预期。
+- [ ] **17.3.2: 测试敏感信息配置化:**
+    - [ ] 在本地开发环境中，通过设置不同的 `.env` 文件值，验证应用是否能正确读取和使用这些配置。
+    - [ ] 确认移除硬编码值后，应用依然能够正常认证和运行。
+    - [ ] 检查Git提交，确保 `.env` 文件未被追踪。
+
+---

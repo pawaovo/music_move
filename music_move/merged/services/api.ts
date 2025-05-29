@@ -314,18 +314,21 @@ export async function processSongs(songList: string, concurrency = 5, batchSize 
  * @param name 播放列表名称
  * @param isPublic 是否公开
  * @param uris 歌曲URI列表
+ * @param description 播放列表描述（可选）
  * @returns 创建结果
  */
 export async function createPlaylistAndAddSongs(
   name: string,
   isPublic: boolean,
-  uris: string[]
+  uris: string[],
+  description: string = ''
 ) {
   try {
     // 创建请求数据
     const requestData = {
       name,
       public: isPublic,
+      description,
       uris
     };
     

@@ -94,13 +94,15 @@ export default function SummaryPage() {
       
       console.log('摘要页面 - 开始创建播放列表');
       console.log('摘要页面 - 播放列表名称:', newPlaylistName);
+      console.log('摘要页面 - 播放列表描述:', newPlaylistDescription);
       console.log('摘要页面 - 选中歌曲数量:', selectedSongUris.length);
       
       // 调用 API 创建播放列表
       const result = await createPlaylistAndAddSongs(
         newPlaylistName,
         isPlaylistPublic,
-        selectedSongUris
+        selectedSongUris,
+        newPlaylistDescription
       );
       
       console.log('摘要页面 - 创建播放列表成功:', result);

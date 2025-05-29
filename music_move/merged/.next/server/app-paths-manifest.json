@@ -1,6 +1,6 @@
 {
   "/page": "app/page.js",
-  "/complete/page": "app/complete/page.js",
   "/spotify-auth-success/page": "app/spotify-auth-success/page.js",
+  "/complete/page": "app/complete/page.js",
   "/summary/page": "app/summary/page.js"
 }

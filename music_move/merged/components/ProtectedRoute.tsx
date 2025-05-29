@@ -67,7 +67,7 @@ export default function ProtectedRoute({
             } else {
               // 用户未登录Spotify，直接重定向到首页
               console.log('ProtectedRoute: 用户未登录Spotify，重定向到首页:', redirectTo);
-              router.push(redirectTo);
+            router.push(redirectTo);
             }
           } else {
             console.log('ProtectedRoute: 用户已认证，显示受保护内容');
