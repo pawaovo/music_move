@@ -1,136 +1,105 @@
-# Spotify 搜索脚本
+# Music Move - Spotify 播放列表导入工具
 
-这个Python脚本使用Spotify Web API来根据歌曲名和艺术家名搜索歌曲，并显示搜索结果。
+Music Move 是一个综合性的 Web 应用，可以帮助用户将其他音乐平台的播放列表无缝导入到 Spotify。该项目由 Next.js 前端和 FastAPI 后端组成。
 
-## 准备工作
+## 功能特点
 
-1. 首先，你需要安装必要的Python包：
+- 导入纯文本格式的歌曲列表到 Spotify 播放列表
+- 智能歌曲匹配和识别算法，提高匹配准确率
+- 支持批量处理和并发请求，加快导入速度
+- 用户友好的网页界面，方便操作
+- Spotify OAuth 认证流程，安全可靠
+
+## 项目结构
+
+- `music_move/` - Next.js 前端代码
+- `spotify_playlist_importer/` - FastAPI 后端代码
+- `docs/` - 项目文档
+
+## 快速开始
+
+### 前提条件
+
+1. Node.js 16+ 和 npm/yarn
+2. Python 3.9+
+3. Spotify 开发者账号和应用
+
+### 本地开发设置
+
+1. 克隆仓库
 
 ```bash
+git clone https://github.com/yourusername/music_move.git
+cd music_move
+```
+
+2. 安装后端依赖
+
+```bash
+cd spotify_playlist_importer
 pip install -r requirements.txt
 ```
 
-2. 你需要在Spotify开发者平台创建一个应用以获取API凭证：
-   - 访问 [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
-   - 登录你的Spotify账户
-   - 点击"Create an App"
-   - 填写应用名称和描述
-   - 获取Client ID和Client Secret
+3. 配置 Spotify API 凭证
 
-3. 创建`.env`文件：
-   - 在项目根目录（或指定路径如`D:\ai\music_move\.env`）创建一个名为`.env`的文件
-   - 添加以下内容，替换为你的实际凭证：
-
-```
-SPOTIFY_CLIENT_ID=你的客户端ID
-SPOTIFY_CLIENT_SECRET=你的客户端密钥
-```
-
-## 基础版使用方法
-
-### 歌曲名+艺术家名搜索
-
-基础版脚本 `spotify_search.py` 提供使用歌曲名和艺术家名搜索的功能：
+在 `spotify_playlist_importer` 目录中，复制示例配置文件：
 
 ```bash
-python spotify_search.py "歌曲名" "艺术家名"
+cp spotify_config.json.example spotify_config.json
 ```
 
-例如：
+然后编辑 `spotify_config.json`，添加你从 [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) 获取的 Client ID 和 Client Secret。
+
+4. 安装前端依赖
 
 ```bash
-python spotify_search.py "会魔法的老人" "法老"
+cd ../music_move
+npm install
+# 或者使用 yarn
+yarn install
 ```
 
-### 仅歌曲名搜索
-
-如果你只想使用歌曲名搜索，可以使用 `spotify_search_by_track.py` 脚本：
+5. 启动后端服务
 
 ```bash
-python spotify_search_by_track.py "歌曲名"
+cd ../spotify_playlist_importer
+python run_fixed_api.py
 ```
 
-例如：
+6. 启动前端服务
 
 ```bash
-python spotify_search_by_track.py "会魔法的老人"
+cd ../music_move
+npm run dev
+# 或者使用 yarn
+yarn dev
 ```
 
-## 增强版使用方法
+7. 访问应用
 
-### 歌曲名+艺术家名搜索（增强版）
+在浏览器中打开 http://localhost:3000 来访问应用。
 
-增强版脚本 `spotify_search_extended.py` 提供更多功能选项：
+## 部署指南
 
-```bash
-python spotify_search_extended.py "歌曲名" "艺术家名" [选项]
-```
+详细的部署步骤可以参考 [部署指南文档](docs/deployment_guide.md)，其中包括：
 
-可用选项：
-- `-d, --detailed`: 显示详细信息（包括专辑、发行日期、时长等）
-- `-l, --limit NUMBER`: 设置最大结果数量（默认：10）
-- `-s, --save`: 将结果保存为JSON文件
-- `-o, --output FILENAME`: 指定JSON输出文件名（默认使用时间戳）
+- 如何部署 Next.js 前端到 Vercel
+- 如何部署 FastAPI 后端到 Render
+- 配置环境变量和 Spotify API 设置
+- CORS 设置和安全考虑
 
-例如：
+## API 参考
 
-```bash
-# 显示详细信息
-python spotify_search_extended.py "会魔法的老人" "法老" --detailed
+HTTP API 端点的详细信息可以在后端服务运行时通过访问 `/docs` 路径找到 (例如 http://localhost:8888/docs)。这是由 FastAPI 自动生成的 Swagger 文档。
 
-# 显示15条结果
-python spotify_search_extended.py "会魔法的老人" "法老" --limit 15
+## 贡献指南
 
-# 保存结果到JSON文件
-python spotify_search_extended.py "会魔法的老人" "法老" --save
+1. Fork 仓库
+2. 创建你的特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交你的改动 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 打开一个 Pull Request
 
-# 保存结果到指定文件
-python spotify_search_extended.py "会魔法的老人" "法老" --save --output results.json
-```
+## 许可证
 
-### 仅歌曲名搜索（增强版）
-
-如果你只想使用歌曲名搜索，但需要更多功能选项，可以使用 `spotify_search_by_track_extended.py` 脚本：
-
-```bash
-python spotify_search_by_track_extended.py "歌曲名" [选项]
-```
-
-可用选项与 `spotify_search_extended.py` 相同：
-
-```bash
-# 显示详细信息
-python spotify_search_by_track_extended.py "会魔法的老人" --detailed
-
-# 显示15条结果
-python spotify_search_by_track_extended.py "会魔法的老人" --limit 15
-
-# 保存结果到JSON文件
-python spotify_search_by_track_extended.py "会魔法的老人" --save
-```
-
-## 输出示例
-
-基础版输出：
-```
-2023-xx-xx xx:xx:xx,xxx - INFO - 搜索歌曲: 会魔法的老人, 艺术家: 法老
-2023-xx-xx xx:xx:xx,xxx - INFO - 搜索查询: track:会魔法的老人 artist:法老
-2023-xx-xx xx:xx:xx,xxx - INFO - 找到 X 条结果:
-2023-xx-xx xx:xx:xx,xxx - INFO - 1. 歌曲: 歌曲名1 - 艺术家: 艺术家名1
-2023-xx-xx xx:xx:xx,xxx - INFO - 2. 歌曲: 歌曲名2 - 艺术家: 艺术家名2
-...
-```
-
-增强版详细输出：
-```
-2023-xx-xx xx:xx:xx,xxx - INFO - 搜索歌曲: 会魔法的老人, 艺术家: 法老
-2023-xx-xx xx:xx:xx,xxx - INFO - 搜索查询: track:会魔法的老人 artist:法老
-2023-xx-xx xx:xx:xx,xxx - INFO - 找到 X 条结果:
-2023-xx-xx xx:xx:xx,xxx - INFO - 1. 歌曲: 歌曲名1 - 艺术家: 艺术家名1
-2023-xx-xx xx:xx:xx,xxx - INFO -    专辑: 专辑名1
-2023-xx-xx xx:xx:xx,xxx - INFO -    发行日期: 2023-01-01
-2023-xx-xx xx:xx:xx,xxx - INFO -    时长: 3分45秒
-2023-xx-xx xx:xx:xx,xxx - INFO -    热门度: 85/100
-2023-xx-xx xx:xx:xx,xxx - INFO -    Spotify链接: https://open.spotify.com/track/...
-...
-``` 
+该项目采用 MIT 许可证 - 详情请查看 LICENSE 文件。 

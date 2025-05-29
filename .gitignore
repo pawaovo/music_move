@@ -26,3 +26,30 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+
+# Spotify API 相关敏感文件
+.spotify_cache
+.cache
+spotify_config.json
+*.pem
+*.key
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg 
