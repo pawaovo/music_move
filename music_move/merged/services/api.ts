@@ -1,7 +1,7 @@
 import { SpotifyUserInfo, ApiError, AuthStatusResponse, ProcessSongsData } from '../store/types';
 
 // API基础URL - 使用环境变量或默认值
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8888';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8888';
 // 修复API路径
 console.log('使用API基础URL:', API_BASE_URL);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useStore';
 // 使用真实API
-import { checkAuthStatus, getAuthUrl, logout } from '@/services/api';
+import { checkAuthStatus, getAuthUrl, logout, API_BASE_URL } from '@/services/api';
 import { SpotifyUserInfo } from '@/store/types';
 import Image from 'next/image';
 import { LogOut, AlertCircle, RefreshCw } from 'lucide-react';
@@ -61,7 +61,7 @@ export default function AuthCheck() {
       } catch (error) {
         console.error('检查认证状态失败:', error);
         setBackendStatus('offline');
-        setError('无法连接到服务器，请确保后端服务正在运行(http://localhost:8888)。后端报错：' + (error instanceof Error ? error.message : String(error)));
+        setError(`无法连接到服务器，请确保后端服务正在运行(${API_BASE_URL})。后端报错：${error instanceof Error ? error.message : String(error)}`);
       } finally {
         setCheckingAuth(false);
       }
@@ -88,7 +88,7 @@ export default function AuthCheck() {
       window.location.href = url;
     } catch (error) {
       console.error('获取授权URL失败:', error);
-      setError('无法获取Spotify授权链接，请确保后端服务正在运行(http://localhost:8888)。后端报错：' + (error instanceof Error ? error.message : String(error)));
+      setError(`无法获取Spotify授权链接，请确保后端服务正在运行(${API_BASE_URL})。后端报错：${error instanceof Error ? error.message : String(error)}`);
     }
   };
   
@@ -120,7 +120,7 @@ export default function AuthCheck() {
     } catch (error) {
       console.error('刷新认证状态失败:', error);
       setBackendStatus('offline');
-      setError('刷新认证状态失败，请确保后端服务正在运行(http://localhost:8888)。后端报错：' + (error instanceof Error ? error.message : String(error)));
+      setError(`刷新认证状态失败，请确保后端服务正在运行(${API_BASE_URL})。后端报错：${error instanceof Error ? error.message : String(error)}`);
       setCheckingAuth(false);
     }
   };
