@@ -8,3 +8,4 @@ pypinyin>=0.49.0  # 用于中文拼音转换
 fastapi>=0.105.0  # API服务器框架
 pydantic>=2.5.2  # 数据验证
 uvicorn>=0.24.0  # ASGI服务器
+gunicorn # WSGI HTTP Server for UNIX
