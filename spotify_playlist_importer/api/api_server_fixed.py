@@ -16,7 +16,7 @@ logger = logging.getLogger("spotify-playlist-importer-api")
 
 # 环境变量配置
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://music-move.vercel.app")
-BACKEND_URL = os.environ.get("BACKEND_URL", "https://music-move-backend.onrender.com")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://music-move.onrender.com")
 
 # 记录URL配置
 logger.info(f"前端URL: {FRONTEND_URL}")
