@@ -41,6 +41,12 @@ app.include_router(spotify_router)
 async def root():
     return {"message": "欢迎使用Spotify Playlist Importer API", "docs": "/docs"}
 
+# 添加健康检查端点
+@app.get("/health")
+async def health_check():
+    """健康检查端点，用于Render平台的健康检查"""
+    return {"status": "ok", "message": "服务正常运行"}
+
 # 直接在app上注册/callback路由，不通过router
 @app.get("/callback")
 async def spotify_callback_root(request: Request, response: Response):
