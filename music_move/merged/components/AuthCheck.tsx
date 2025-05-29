@@ -128,15 +128,26 @@ export default function AuthCheck() {
   // 登出
   const handleLogout = async () => {
     try {
-      // 调用后端登出API
-      await logout();
-      // 清除前端状态
+      console.log('开始登出操作...');
+      setError(null);
+      
+      // 先清除前端状态，确保即使API调用失败，用户体验上也是已登出状态
       setAuthState(false, null);
       // 重置Spotify登录状态
       setSpotifyLoginStatus('unknown');
+      
+      try {
+        // 尝试调用后端登出API
+        await logout();
+        console.log('后端登出API调用成功');
+      } catch (error) {
+        // 即使后端API调用失败，也保持前端已登出状态
+        console.error('后端登出API调用失败:', error);
+        // 不显示错误给用户，因为前端已经清除了登录状态
+      }
     } catch (error) {
-      console.error('登出失败:', error);
-      setError('登出失败，请稍后重试');
+      console.error('登出过程中发生意外错误:', error);
+      // 即使在整个过程中出现错误，也不还原登录状态
     }
   };
   

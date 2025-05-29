@@ -1,8 +1,0 @@
-Good Song - Good Artist
-NoSeparatorHere
- - Just Artist
-Just Title - 
-Another Good Song - Artist1 / Artist2 / Artist3
-Empty Line Next
-
-Weird Separator - Artist A ; Artist B 

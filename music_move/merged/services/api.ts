@@ -230,15 +230,24 @@ export async function refreshToken() {
  */
 export async function logout() {
   try {
+    console.log('调用登出API...');
     const response = await fetch(`${API_BASE_URL}/api/logout`, {
       method: 'POST',
       ...fetchOptions,
     });
     
+    // 即使后端返回错误状态码，也视为成功，因为前端已经清除了登录状态
+    if (!response.ok) {
+      console.warn(`登出API返回非成功状态码: ${response.status} - ${response.statusText}`);
+      // 不抛出异常，返回模拟成功
+      return { status: "success", message: "用户已在前端登出" };
+    }
+    
     return await handleApiResponse(response);
   } catch (error) {
-    console.error('登出失败:', error);
-    throw new Error(handleFetchError(error));
+    console.warn('登出API调用失败，但用户已在前端登出:', error);
+    // 返回模拟成功
+    return { status: "success", message: "用户已在前端登出" };
   }
 }
 

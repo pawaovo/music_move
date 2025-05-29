@@ -30,8 +30,11 @@ export default function ProtectedRoute({
     async function checkAuth() {
       if (!isAuthenticated && !isCheckingAuth) {
         try {
+          console.log('ProtectedRoute: 开始检查认证状态...');
           setCheckingAuth(true);
           const response = await checkAuthStatus();
+          
+          console.log('ProtectedRoute: 认证状态检查结果:', response);
           setAuthState(response.isAuthenticated, response.userInfo);
           
           // 设置Spotify登录状态
@@ -40,29 +43,37 @@ export default function ProtectedRoute({
           }
           
           if (!response.isAuthenticated) {
+            console.log('ProtectedRoute: 用户未认证，检查Spotify登录状态:', response.spotifyLoginStatus);
+            
             // 用户已登录Spotify但未授权本应用，显示授权模态框
             if (response.spotifyLoginStatus === true) {
               try {
+                console.log('ProtectedRoute: 用户已登录Spotify但未授权本应用，获取授权URL');
                 // 获取授权URL
                 const url = await getAuthUrl();
                 if (url) {
+                  console.log('ProtectedRoute: 获取到授权URL，显示授权模态框');
                   setAuthUrl(url);
                   setShowAuthModal(true);
                 } else {
+                  console.log('ProtectedRoute: 未获取到有效的授权URL，重定向到首页:', redirectTo);
                   // 无法获取授权URL，重定向到首页
                   router.push(redirectTo);
                 }
               } catch (error) {
-                console.error('获取授权URL失败:', error);
+                console.error('ProtectedRoute: 获取授权URL失败:', error);
                 router.push(redirectTo);
               }
             } else {
               // 用户未登录Spotify，直接重定向到首页
-            router.push(redirectTo);
+              console.log('ProtectedRoute: 用户未登录Spotify，重定向到首页:', redirectTo);
+              router.push(redirectTo);
             }
+          } else {
+            console.log('ProtectedRoute: 用户已认证，显示受保护内容');
           }
         } catch (error) {
-          console.error('检查认证状态失败:', error);
+          console.error('ProtectedRoute: 检查认证状态失败:', error);
           // 发生错误，重定向到指定页面
           router.push(redirectTo);
         } finally {
@@ -70,6 +81,7 @@ export default function ProtectedRoute({
           setIsChecked(true);
         }
       } else {
+        console.log('ProtectedRoute: 跳过认证检查，已认证状态:', isAuthenticated);
         setIsChecked(true);
       }
     }

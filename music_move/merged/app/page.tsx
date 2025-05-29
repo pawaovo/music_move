@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import StoreDemo from "../components/StoreDemo";
 import { useSongProcessStore, useAuthStore } from "../store/useStore";
 import { useAppSteps, AppStep } from "../hooks/useAppSteps";
-import { processSongs, checkAuthStatus } from "../services/api";
+import { processSongs, checkAuthStatus, getAuthUrl } from "../services/api";
 import { ProcessSongsData, ApiError } from "../store/types";
 
 export default function Home() {
@@ -94,6 +94,37 @@ export default function Home() {
     }
     
     try {
+      // 首先检查用户是否已授权
+      if (!isAuthenticated) {
+        console.log('用户未授权，获取授权URL');
+        
+        // 设置加载状态
+        setProcessingSongs(true);
+        
+        try {
+          // 获取授权URL
+          const authUrl = await getAuthUrl();
+          console.log('获取到授权URL:', authUrl);
+          
+          // 提示用户需要先授权
+          alert('需要先授权Spotify账号才能继续操作，即将跳转到授权页面');
+          
+          // 跳转到授权URL
+          window.location.href = authUrl;
+          return;
+        } catch (error) {
+          console.error('获取授权URL失败:', error);
+          setProcessSongsError({
+            code: 'AUTH_REQUIRED',
+            message: '获取授权URL失败，请刷新页面重试',
+            details: error
+          } as ApiError);
+          setProcessingSongs(false);
+          return;
+        }
+      }
+      
+      // 用户已授权，继续处理歌曲列表
       // 设置加载状态
       setProcessingSongs(true);
       setProcessSongsError(null);

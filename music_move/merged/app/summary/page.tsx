@@ -136,7 +136,7 @@ export default function SummaryPage() {
   
   // 使用 ProtectedRoute 包装内容
   return (
-    <ProtectedRoute>
+    <ProtectedRoute redirectTo="/">
     <div className="min-h-screen bg-[#121212] text-white">
       {/* 全屏加载状态 */}
       {isCreatingPlaylist && (

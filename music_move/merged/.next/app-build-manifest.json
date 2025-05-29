@@ -11,15 +11,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/spotify-auth-success/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/spotify-auth-success/page.js"
-    ],
     "/summary/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/summary/page.js"
+    ],
+    "/spotify-auth-success/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/spotify-auth-success/page.js"
     ],
     "/complete/page": [
       "static/chunks/webpack.js",

@@ -88,9 +88,9 @@ export const useStore = create<StoreState>()(
       
       selectedSongUris: [],
       
-      newPlaylistName: '我的歌曲转移',
-      newPlaylistDescription: '从其他平台转移到 Spotify 的歌曲收藏',
-      isPlaylistPublic: false,
+      newPlaylistName: '我的歌单',
+      newPlaylistDescription: '',
+      isPlaylistPublic: true,
       
       isAuthenticated: false,
       userInfo: null,
@@ -181,9 +181,9 @@ export const useStore = create<StoreState>()(
         isCreatingPlaylist: false,
         createPlaylistError: null,
         createdPlaylistData: null,
-        newPlaylistName: '我的歌曲转移',
-        newPlaylistDescription: '从其他平台转移到 Spotify 的歌曲收藏',
-        isPlaylistPublic: false
+        newPlaylistName: '我的歌单',
+        newPlaylistDescription: '',
+        isPlaylistPublic: true
       }),
       
       resetAllState: () => {
