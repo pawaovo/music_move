@@ -25,12 +25,18 @@ function SuccessPageContent() {
         
         // 添加重试机制，确保认证状态更新
         let retries = 0;
-        const maxRetries = 3;
+        const maxRetries = 5; // 增加重试次数
         let authSuccess = false;
         
         while (retries < maxRetries && !authSuccess) {
           // 检查认证状态
           console.log(`尝试检查认证状态 (尝试 ${retries + 1}/${maxRetries})...`);
+          
+          // 首次检查前等待一段时间，确保后端有足够时间处理Cookie
+          if (retries === 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // 首次等待2秒
+          }
+          
           const { isAuthenticated, userInfo } = await checkAuthStatus();
           
           if (isAuthenticated && userInfo) {
@@ -41,8 +47,8 @@ function SuccessPageContent() {
           } else {
             console.log('未获取到用户信息，将重试...');
             retries++;
-            // 等待短暂时间后重试
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // 等待时间随着重试次数增加
+            await new Promise(resolve => setTimeout(resolve, 1500 * retries)); // 逐渐增加等待时间
           }
         }
         
@@ -53,13 +59,13 @@ function SuccessPageContent() {
           setTimeout(() => {
             setRedirecting(false);
             router.push('/');
-          }, 2500);
+          }, 3000); // 增加到3秒
         } else {
           console.warn('多次尝试后仍未获取到用户信息');
           setTimeout(() => {
             setRedirecting(false);
             router.push('/?authRetry=true');  // 添加参数，让首页知道需要重试认证
-          }, 2500);
+          }, 3000); // 增加到3秒
         }
       } catch (error) {
         console.error('检查认证状态失败:', error);

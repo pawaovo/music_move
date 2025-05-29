@@ -86,18 +86,40 @@ async def spotify_callback_root(request: Request, response: Response):
         except:
             pass
         # 重定向到前端错误页面，并附带错误信息
-        return Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
             headers={"Location": f"{frontend_url}/spotify-auth-error?message={safe_error_message}"}
         )
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
+            key="spotify_session_id",
+            value=session_id,
+            max_age=60 * 60 * 24 * 30,  # 30天
+            httponly=True,
+            samesite="lax"
+        )
+        
+        return redirect_response
 
     if not code:
         logger.error(f"回调中缺少授权码, 会话ID: {session_id}")
         # 重定向到前端错误页面
-        return Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
             headers={"Location": f"{frontend_url}/spotify-auth-error?message=missing_code"}
         )
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
+            key="spotify_session_id",
+            value=session_id,
+            max_age=60 * 60 * 24 * 30,  # 30天
+            httponly=True,
+            samesite="lax"
+        )
+        
+        return redirect_response
 
     try:
         from spotify.client_manager import get_auth_manager
@@ -110,19 +132,32 @@ async def spotify_callback_root(request: Request, response: Response):
         if not token_info or "access_token" not in token_info:
             logger.error(f"未能从Spotify获取有效的令牌信息, 会话ID: {session_id}, 令牌信息: {token_info}")
             # 重定向到前端错误页面
-            return Response(
+            redirect_response = Response(
                 status_code=status.HTTP_302_FOUND,
                 headers={"Location": f"{frontend_url}/spotify-auth-error?message=token_exchange_failed"}
             )
+            
+            # 设置会话Cookie
+            redirect_response.set_cookie(
+                key="spotify_session_id",
+                value=session_id,
+                max_age=60 * 60 * 24 * 30,  # 30天
+                httponly=True,
+                samesite="lax"
+            )
+            
+            return redirect_response
 
         logger.info(f"成功获取并缓存了访问令牌, 会话ID: {session_id}")
         
         # 设置会话Cookie，确保客户端能够识别会话
-        response = Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
             headers={"Location": f"{frontend_url}/spotify-auth-success?status=true"}
         )
-        response.set_cookie(
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
             key="spotify_session_id",
             value=session_id,
             max_age=60 * 60 * 24 * 30,  # 30天
@@ -130,15 +165,26 @@ async def spotify_callback_root(request: Request, response: Response):
             samesite="lax"
         )
         
-        return response
+        return redirect_response
 
     except Exception as e:
         logger.exception(f"处理Spotify回调时出错: {e}, 会话ID: {session_id}")
         # 重定向到前端错误页面，并附带一般错误信息
-        return Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
             headers={"Location": f"{frontend_url}/spotify-auth-error?message=internal_error"}
         )
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
+            key="spotify_session_id",
+            value=session_id,
+            max_age=60 * 60 * 24 * 30,  # 30天
+            httponly=True,
+            samesite="lax"
+        )
+        
+        return redirect_response
 
 # 异常处理
 @app.exception_handler(Exception)

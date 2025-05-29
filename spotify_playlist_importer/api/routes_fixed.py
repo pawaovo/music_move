@@ -56,13 +56,20 @@ class CreatePlaylistRequest(BaseModel):
 # 获取或创建会话ID (从 auth_routes.py 复制)
 async def get_or_create_session_id(
     request: Request,
+    response: Response,
     session_id: Optional[str] = Cookie(None, alias=SESSION_COOKIE_NAME)
 ) -> str:
     if not session_id:
         session_id = str(uuid.uuid4())
         logger.info(f"为用户创建新的会话ID: {session_id}")
-    # 注意：在原始 auth_routes.py 中，这里会通过 response.set_cookie 设置cookie
-    # 我们将在端点中直接处理cookie的设置，以简化此辅助函数
+        # 在这里设置cookie
+        response.set_cookie(
+            key=SESSION_COOKIE_NAME,
+            value=session_id,
+            max_age=SESSION_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="lax"
+        )
     return session_id
 
 # 定义简单的健康检查端点
@@ -87,6 +94,7 @@ async def api_status():
 @router.get("/auth-status")
 async def auth_status(
     request: Request,
+    response: Response,
     session_id: str = Depends(get_or_create_session_id)
 ):
     """检查用户的Spotify认证状态
@@ -94,6 +102,15 @@ async def auth_status(
     返回用户是否已认证以及用户信息（如果已认证）
     """
     logger.info(f"检查认证状态，会话ID: {session_id}")
+    
+    # 确保响应总是包含会话cookie
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_id,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax"
+    )
     
     try:
         # 获取认证管理器
@@ -144,7 +161,8 @@ async def auth_status(
 
 @router.get("/auth-url")
 async def get_spotify_auth_url(
-    response: Response, # 添加 Response 参数以设置Cookie
+    request: Request,
+    response: Response,
     session_id: str = Depends(get_or_create_session_id)
 ):
     """获取Spotify授权URL端点 (使用真实逻辑)
@@ -154,13 +172,13 @@ async def get_spotify_auth_url(
     """
     logger.info(f"收到获取认证URL请求，会话ID: {session_id}")
     
-    # 设置会话Cookie
+    # 确保响应总是包含会话cookie
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=session_id,
         max_age=SESSION_COOKIE_MAX_AGE,
         httponly=True,
-        samesite="lax" # 推荐设置为 'lax' 或 'strict'
+        samesite="lax"
     )
     
     try:
@@ -198,18 +216,16 @@ async def spotify_callback(
 ):
     """处理Spotify OAuth回调，然后重定向到前端的成功或失败页面。
     
-    接收Spotify OAuth回调请求，处理授权码并获取访问令牌。
-    使用用户的会话ID隔离令牌缓存。
-    处理完成后重定向到前端的成功或失败页面。
+    This endpoint is called by Spotify after user authorization.
+    It processes the authorization code and redirects to the frontend.
     """
-    
     # 获取前端URL（从环境变量中获取，默认为localhost:3000）
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
     
     query_params = request.query_params
     code = query_params.get("code")
     error = query_params.get("error")
-    state = query_params.get("state") # state 通常用于 CSRF 保护，并可能包含原始 session_id
+    state = query_params.get("state")  # 这里的state应该包含session_id
 
     logger.info(f"收到OAuth回调: code={code}, error={error}, state={state}")
 
@@ -217,31 +233,60 @@ async def spotify_callback(
     session_id = state 
     if not session_id:
         logger.error("回调中缺少 state (session_id)")
-        # 重定向到前端错误页面
-        return Response(
-            status_code=status.HTTP_302_FOUND,
-            headers={"Location": f"{frontend_url}/spotify-auth-error?message=缺少state参数"}
-        )
+        # 如果缺少state参数，生成一个新的session_id
+        import uuid
+        session_id = str(uuid.uuid4())
+        logger.info(f"生成新的会话ID: {session_id}")
 
-    logger.info(f"处理回调，会话ID (来自state): {session_id}")
+    logger.info(f"处理回调，会话ID: {session_id}")
 
     if error:
         logger.error(f"Spotify授权错误: {error}, 会话ID: {session_id}")
+        # 使用URL安全的方式处理错误消息
+        safe_error_message = "授权失败"
+        try:
+            # 尝试使用错误消息，但确保URL安全
+            safe_error_message = error.encode('ascii', 'ignore').decode('ascii')
+        except:
+            pass
         # 重定向到前端错误页面，并附带错误信息
-        return Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
-            headers={"Location": f"{frontend_url}/spotify-auth-error?message={error}"}
+            headers={"Location": f"{frontend_url}/spotify-auth-error?message={safe_error_message}"}
         )
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
+            key=SESSION_COOKIE_NAME,
+            value=session_id,
+            max_age=SESSION_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="lax"
+        )
+        
+        return redirect_response
 
     if not code:
         logger.error(f"回调中缺少授权码, 会话ID: {session_id}")
         # 重定向到前端错误页面
-        return Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
-            headers={"Location": f"{frontend_url}/spotify-auth-error?message=缺少授权码"}
+            headers={"Location": f"{frontend_url}/spotify-auth-error?message=missing_code"}
         )
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
+            key=SESSION_COOKIE_NAME,
+            value=session_id,
+            max_age=SESSION_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="lax"
+        )
+        
+        return redirect_response
 
     try:
+        from spotify.client_manager import get_auth_manager
         auth_manager = get_auth_manager(session_id=session_id)
         logger.info(f"为会话 {session_id} 获取到 auth_manager，准备交换令牌")
         
@@ -251,19 +296,32 @@ async def spotify_callback(
         if not token_info or "access_token" not in token_info:
             logger.error(f"未能从Spotify获取有效的令牌信息, 会话ID: {session_id}, 令牌信息: {token_info}")
             # 重定向到前端错误页面
-            return Response(
+            redirect_response = Response(
                 status_code=status.HTTP_302_FOUND,
-                headers={"Location": f"{frontend_url}/spotify-auth-error?message=获取访问令牌失败"}
+                headers={"Location": f"{frontend_url}/spotify-auth-error?message=token_exchange_failed"}
             )
+            
+            # 设置会话Cookie
+            redirect_response.set_cookie(
+                key=SESSION_COOKIE_NAME,
+                value=session_id,
+                max_age=SESSION_COOKIE_MAX_AGE,
+                httponly=True,
+                samesite="lax"
+            )
+            
+            return redirect_response
 
         logger.info(f"成功获取并缓存了访问令牌, 会话ID: {session_id}")
         
         # 设置会话Cookie，确保客户端能够识别会话
-        response = Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
             headers={"Location": f"{frontend_url}/spotify-auth-success?status=true"}
         )
-        response.set_cookie(
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
             key=SESSION_COOKIE_NAME,
             value=session_id,
             max_age=SESSION_COOKIE_MAX_AGE,
@@ -271,15 +329,26 @@ async def spotify_callback(
             samesite="lax"
         )
         
-        return response
+        return redirect_response
 
     except Exception as e:
         logger.exception(f"处理Spotify回调时出错: {e}, 会话ID: {session_id}")
         # 重定向到前端错误页面，并附带一般错误信息
-        return Response(
+        redirect_response = Response(
             status_code=status.HTTP_302_FOUND,
-            headers={"Location": f"{frontend_url}/spotify-auth-error?message=处理授权回调时出错"}
+            headers={"Location": f"{frontend_url}/spotify-auth-error?message=internal_error"}
         )
+        
+        # 设置会话Cookie
+        redirect_response.set_cookie(
+            key=SESSION_COOKIE_NAME,
+            value=session_id,
+            max_age=SESSION_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="lax"
+        )
+        
+        return redirect_response
 
 # 添加直接的/callback路由
 @router.get("/callback")
@@ -297,14 +366,19 @@ async def spotify_callback_direct(request: Request, response: Response):
 @router.post("/process-songs", summary="处理歌曲列表并搜索匹配项 (项目凭证)")
 async def process_songs_endpoint(
     request_data: ProcessSongsRequest,
-    # 注意：此端点使用项目凭证，理论上不需要 session_id
-    # 但为了与旧接口行为一致或未来可能的扩展，可以保留，或者移除 # session_id: str = Depends(get_or_create_session_id)
+    request: Request,
+    response: Response,
+    session_id: str = Depends(get_or_create_session_id)
 ):
-    """
-    处理歌曲列表，在Spotify上搜索匹配项。
+    # 确保响应总是包含会话cookie
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_id,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax"
+    )
     
-    使用项目级别Spotify客户端（Client Credentials Flow），不需要用户登录。
-    """
     try:
         logger.info(f"收到处理歌曲列表请求，歌曲数量: {len(request_data.song_list.splitlines())}")
         
@@ -418,14 +492,19 @@ async def process_songs_endpoint(
 @router.post("/create-playlist", summary="创建Spotify播放列表并添加歌曲 (用户授权)")
 async def create_playlist_endpoint(
     request_data: CreatePlaylistRequest,
+    request: Request,
+    response: Response,
     session_id: str = Depends(get_or_create_session_id)
 ):
-    """
-    创建Spotify播放列表并添加歌曲
+    # 确保响应总是包含会话cookie
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_id,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax"
+    )
     
-    使用用户级别Spotify客户端（Authorization Code Flow），需要用户已登录。
-    此端点需要用户授权才能使用。
-    """
     logger.info(f"收到创建播放列表请求，播放列表名称: {request_data.name}，歌曲数量: {len(request_data.uris)}")
     logger.info(f"播放列表描述: '{request_data.description}'，是否公开: {request_data.public}")
     
@@ -507,13 +586,13 @@ async def create_playlist_endpoint(
 
 @router.post("/logout")
 async def logout_user(
+    request: Request,
     response: Response,
     session_id: str = Depends(get_or_create_session_id)
 ):
-    """登出用户，清除会话
-
-    清除会话Cookie并尝试清除令牌缓存
-    """
+    # 确保删除会话cookie
+    response.delete_cookie(key=SESSION_COOKIE_NAME)
+    
     logger.info(f"用户请求登出，会话ID: {session_id}")
     
     try:
@@ -532,13 +611,6 @@ async def logout_user(
         except Exception as e:
             logger.warning(f"清除令牌缓存失败: {e}，会话ID: {session_id}")
             # 继续处理，不阻止登出流程
-        
-        # 清除会话Cookie
-        response.delete_cookie(
-            key=SESSION_COOKIE_NAME,
-            httponly=True,
-            samesite="lax"
-        )
         
         return {"status": "success", "message": "用户已成功登出"}
     
