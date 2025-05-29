@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/useStore';
 import { checkAuthStatus } from '@/services/api';
 
-export default function AuthCallbackPage() {
+// 创建一个包含useSearchParams的组件
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -114,5 +115,21 @@ export default function AuthCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 主页面组件，使用Suspense包裹CallbackContent
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <div className="bg-[#282828] rounded-xl p-8 max-w-md w-full text-center">
+          <div className="animate-spin h-12 w-12 border-4 border-t-[#1DB954] border-r-[#1DB954] border-b-transparent border-l-transparent rounded-full mx-auto mb-4"></div>
+          <h1 className="text-white text-xl font-medium mb-2">加载中...</h1>
+        </div>
+      </div>
+    }>
+      <CallbackContent />
+    </Suspense>
   );
 } 
