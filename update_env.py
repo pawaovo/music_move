@@ -47,5 +47,15 @@ def main():
     logger.info(f"SPOTIFY_CLIENT_SECRET: {spotify_client_secret} -> SPOTIPY_CLIENT_SECRET")
     logger.info(f"SPOTIPY_REDIRECT_URI: {spotipy_redirect_uri}")
 
+# 设置 Spotify API 凭据
+os.environ["SPOTIPY_CLIENT_ID"] = "d76bf1bba8174e4c9ac28dc3404bd8ac"
+os.environ["SPOTIPY_CLIENT_SECRET"] = "0b11ec134c984fae883bb1fd966d8ed2"
+os.environ["SPOTIPY_REDIRECT_URI"] = "http://127.0.0.1:8888/callback"
+
+print("已设置 Spotify API 环境变量")
+print(f"SPOTIPY_CLIENT_ID: {os.environ.get('SPOTIPY_CLIENT_ID')}")
+print(f"SPOTIPY_CLIENT_SECRET: {os.environ.get('SPOTIPY_CLIENT_SECRET')}")
+print(f"SPOTIPY_REDIRECT_URI: {os.environ.get('SPOTIPY_REDIRECT_URI')}")
+
 if __name__ == "__main__":
     main() 

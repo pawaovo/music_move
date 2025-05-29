@@ -31,15 +31,16 @@ class ParsedSong:
         self.artists = artists
 
 class MatchedSong:
-    """模拟MatchedSong类，用于测试"""
+    """简化版的MatchedSong类，用于测试"""
     def __init__(self, parsed_song, spotify_id: str, name: str, artists: List[str], 
-                 uri: str, album_name: str, duration_ms: int):
+                 uri: str, album_name: str, album_image_urls: Optional[List[str]] = None, duration_ms: int = 0):
         self.parsed_song = parsed_song
         self.spotify_id = spotify_id
         self.name = name
         self.artists = artists
         self.uri = uri
         self.album_name = album_name
+        self.album_image_urls = album_image_urls
         self.duration_ms = duration_ms
 
 # 模拟Spotify搜索函数
@@ -67,6 +68,7 @@ def mock_search_song_on_spotify(sp, parsed_song: ParsedSong) -> Optional[Matched
             artists=artists,
             uri=f"spotify:track:{song_id}",
             album_name=f"Album for {parsed_song.title}",
+            album_image_urls=[f"https://example.com/album_{song_id}.jpg"],
             duration_ms=random.randint(180000, 300000)
         )
     return None

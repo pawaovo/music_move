@@ -28,6 +28,7 @@ class TestProcessSongs:
             artists=["Test Artist"],
             uri="spotify:track:test_id",
             album_name="Test Album",
+            album_image_urls=["https://example.com/image.jpg"],
             duration_ms=300000
         )
         
@@ -113,6 +114,7 @@ class TestProcessSongs:
             artists=["Artist 1"],
             uri="spotify:track:test_id",
             album_name="Test Album",
+            album_image_urls=["https://example.com/image.jpg"],
             duration_ms=300000
         )
         

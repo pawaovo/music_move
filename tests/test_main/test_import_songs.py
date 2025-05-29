@@ -35,6 +35,7 @@ class TestImportSongs:
                 artists=["Artist 1"],
                 uri="spotify:track:id1",
                 album_name="Album 1",
+                album_image_urls=["https://example.com/album1.jpg"],
                 duration_ms=300000
             ),
             MatchedSong(
@@ -44,6 +45,7 @@ class TestImportSongs:
                 artists=["Artist 2"],
                 uri="spotify:track:id2",
                 album_name="Album 2",
+                album_image_urls=["https://example.com/album2.jpg"],
                 duration_ms=310000
             )
         ]

@@ -428,21 +428,384 @@ Based on `docs/project_upgrade_plan.md` (Version 1.2)
     - [x] 核心相似度算法及权重保持不变。
 
 ### 11.5 最终匹配分数计算与低分处理优化
--   [ ] **11.5.1: 维持现有加权综合评分方式:**
-    -   [ ] 继续使用现有的 `TITLE_WEIGHT`, `ARTIST_WEIGHT`, `BRACKET_WEIGHT` 组合各部分得分。
--   [ ] **11.5.2: 优化 `is_artist_only_search` 时的分数处理:**
-    -   [ ] 即使是仅艺术家搜索的候选，也应采用 `EnhancedMatcher` 计算的实际内容匹配分数。
-    -   [ ] `is_low_confidence` 标志可保留，但不应强制将高实际匹配分覆盖为固定低分（如50分）。
--   [ ] **11.5.3: 优化 `final_score <= 5.0` (或极低分) 时的回退逻辑:**
-    -   [ ] 如果某单项（如标准化后标题完全匹配，得100分）得分很高，即使总分因其他项过低而极低，最终分数也不应是固定的50分。
-    -   [ ] 考虑动态下限，例如：如果标准化标题100%匹配，则最终分数不应低于一个特定值（例如70分），除非艺术家完全不相关。或者 `max(一个基础值, 0.6 * 最高单项分)`。
-    -   [ ] 目标是减少不合理的硬编码低分，使分数更真实反映部分高质量匹配。
+-   [x] **11.5.1: 维持现有加权综合评分方式:**
+    -   [x] 继续使用现有的 `TITLE_WEIGHT`, `ARTIST_WEIGHT`, `BRACKET_WEIGHT` 组合各部分得分。
+-   [x] **11.5.2: 优化 `is_artist_only_search` 时的分数处理:**
+    -   [x] 即使是仅艺术家搜索的候选，也应采用 `EnhancedMatcher` 计算的实际内容匹配分数。
+    -   [ x] `is_low_confidence` 标志可保留，但不应强制将高实际匹配分覆盖为固定低分（如50分）。
+-   [ x] **11.5.3: 优化 `final_score <= 5.0` (或极低分) 时的回退逻辑:**
+    -   [ x] 如果某单项（如标准化后标题完全匹配，得100分）得分很高，即使总分因其他项过低而极低，最终分数也不应是固定的50分。
+    -   [ x] 考虑动态下限，例如：如果标准化标题100%匹配，则最终分数不应低于一个特定值（例如70分），除非艺术家完全不相关。或者 `max(一个基础值, 0.6 * 最高单项分)`。
+    -   [ x] 目标是减少不合理的硬编码低分，使分数更真实反映部分高质量匹配。
 
 ### 11.6 测试与验证
--   [ ] **11.6.1: 针对性设计测试用例:**
-    -   [ ] 包含简繁体差异、拼音艺术家名、额外艺术家、不同括号格式等场景。
-    -   [ ] 验证先前报告的低分问题（如"三十岁的女人 - 赵雷"，"给你呀 - 蒋小呢"）是否得到改善。
--   [ ] **11.6.2: 回归测试:**
-    -   [ ] 确保优化没有对原先能够正确高分匹配的简单案例产生负面影响。
--   [ ] **11.6.3: 性能评估:**
-    -   [ ] 确认上述调整未显著降低匹配流程的整体性能。
+-   [ x] **11.6.1: 针对性设计测试用例:**
+    -   [ x] 包含简繁体差异、拼音艺术家名、额外艺术家、不同括号格式等场景。
+    -   [ x] 验证先前报告的低分问题（如"三十岁的女人 - 赵雷"，"给你呀 - 蒋小呢"）是否得到改善。
+-   [ x] **11.6.2: 回归测试:**
+    -   [ x] 确保优化没有对原先能够正确高分匹配的简单案例产生负面影响。
+-   [ x] **11.6.3: 性能评估:**
+    -   [ x] 确认上述调整未显著降低匹配流程的整体性能。
+
+## XII. 前后端联调架构设计与实现 (Stage 12)
+
+**核心目标**: 通过设计与实现一个高效的API中间层，将现有的Python后端Spotify歌曲搜索与匹配功能与Next.js前端页面进行整合，实现完整的歌曲导入与播放列表创建用户体验流程。
+
+### 12.1 后端API设计与实现 (FastAPI)
+- [ ] **12.1.1: 搭建FastAPI基础框架:**
+    - [ ] 创建新的API模块，如 `api_server.py` 或 `api/` 目录结构。
+    - [ ] 集成依赖项：FastAPI, Pydantic, uvicorn, CORS中间件。
+    - [ ] 实现基础API服务器配置，包括CORS策略和错误处理。
+- [ ] **12.1.2: 实现歌曲处理API端点:**
+    - [ ] 创建 `POST /api/process-songs` 端点，接收歌曲列表文本。
+    - [ ] 实现解析输入文本，调用现有的 `process_song_list_file` 和 `search_song_on_spotify` 函数处理歌曲。
+    - [ ] 设计响应模型，包含总数、匹配歌曲、未匹配歌曲及其详细信息。
+    - [ ] 实现异常处理与日志记录。
+- [ ] **12.1.3: 实现播放列表创建API端点:**
+    - [ ] 创建 `POST /api/create-playlist-and-add-songs` 端点，接收播放列表名称、描述、公开状态和歌曲URI列表。
+    - [ ] 调用现有的 `create_spotify_playlist` 和 `add_tracks_to_spotify_playlist` 函数。
+    - [ ] 设计响应模型，包含成功状态、播放列表ID和URL等信息。
+- [x] **12.1.4: Spotify认证流程管理:**
+    - [x] 设计API服务的Spotify认证策略，考虑：
+        - [x] 实现基于现有授权流程的简化版，支持API服务器后台维护有效Token。
+        - [x] 添加认证状态检查端点 `GET /api/auth-status`。
+        - [x] 实现 `GET /api/auth-callback` 处理Spotify OAuth回调。
+    - [x] 实现Token刷新机制，确保长时间运行时的有效性。
+
+### 12.2 前端改造 (Next.js)
+- [x] **12.2.1: 创建API服务层:**
+    - [x] 在 `lib` 或新建 `services` 目录下创建 `api.ts` 文件。
+    - [x] 实现 `processSongs` 函数，调用后端 `/api/process-songs` 端点。
+    - [x] 实现 `createPlaylistAndAddSongs` 函数，调用后端 `/api/create-playlist-and-add-songs` 端点。
+    - [x] 实现 `checkAuthStatus` 函数，调用后端 `/api/auth-status` 端点.
+- [x] **12.2.2: 首页组件改造:**
+    - [x] 将静态 HTML 转换为 React 受控组件，添加状态管理。
+    - [x] 实现歌曲文本输入表单和验证逻辑。
+    - [x] 将"转换歌曲列表"按钮的点击事件绑定到 `processSongs` API调用。
+    - [x] 实现加载状态和错误提示UI组件。
+    - [x] 成功后将数据传递到概要页面（使用状态管理或URL参数）。
+- [x] **12.2.3: 概要页组件改造:**
+    - [x] 实现接收和展示从首页传递的歌曲匹配信息。
+    - [x] 添加显示匹配成功和失败歌曲的UI组件。
+    - [x] 优化"开始转移"按钮，点击时收集播放列表信息，调用 `createPlaylistAndAddSongs`。
+    - [x] 实现API调用过程中的加载状态和错误处理。
+- [x] **12.2.4: 编辑页和完成页组件改造:**
+    - [x] 根据流程需要，调整这些页面的逻辑和数据流。
+    - [x] 编辑页：实现播放列表名称、描述等信息的表单。
+    - [x] 完成页：展示从API返回的播放列表创建结果和链接。
+
+### 12.3 状态管理与错误处理
+- [x] **12.3.1: 实现前端状态管理:**
+    - [x] 使用 React Context API 或轻量级状态管理库 (如 Zustand) 管理歌曲列表和匹配结果。
+    - [x] 实现页面间数据传递的状态持久化（或通过URL参数）。
+- [x] **12.3.2: 全面的错误处理:**
+    - [x] 后端：实现结构化的错误响应格式，包含错误代码和详细信息。
+    - [x] 前端：使用 Toast 组件展示API错误信息，提供用户友好的错误提示。
+    - [x] 对常见错误场景（认证失败、API限流等）提供专门的处理逻辑。
+
+### 12.4 部署与环境配置
+- [x] **12.4.1: 环境变量配置:**
+    - [x] 后端：整合现有配置系统，支持通过环境变量设置API服务器参数。
+    - [x] 前端：在配置文件中设置 `API_BASE_URL` 等必要的环境变量。
+- [x] **12.4.2: 启动脚本与文档:**
+    - [x] 创建启动脚本，支持同时启动API服务器和Next.js开发服务器。
+    - [x] 编写README，详细说明如何设置、启动和使用整合后的系统。
+
+### 12.5 测试与验证
+- [ x] **12.5.1: API端点测试:**
+    - [ x] 编写单元测试，验证API端点的输入验证、处理逻辑和错误处理。
+    - [ x] 使用 Postman 或类似工具创建API测试用例集。
+- [ x] **12.5.2: 前后端集成测试:**
+    - [ x] 设计端到端测试场景，验证从输入歌曲列表到创建播放列表的完整流程。
+    - [ x] 测试不同的错误和边缘情况，确保系统的健壮性。
+- [ x] **12.5.3: 性能评估:**
+    - [ x] 对API服务进行负载测试，评估并发处理能力。
+    - [ x] 优化响应时间和资源使用，特别是对于大量歌曲的处理。
+
+## 阶段 13: 前端完整交互逻辑实现
+
+### A. 前端状态管理方案
+
+*   **选型**: 推荐使用 **Zustand** (或 Jotai/Valtio) 作为主要状态管理工具。
+*   **配合**: 可选使用 `nuqs` 管理URL中的步骤状态。
+*   **管理内容**:
+    *   用户输入的原始歌曲列表。
+    *   API调用加载状态 (`isLoading`, `error`)。
+    *   `processSongs` API返回的匹配结果。
+    *   用户在摘要页的歌曲选择。
+    *   新播放列表的名称、描述、公开状态。
+    *   `createPlaylistAndAddSongs` API的加载状态和结果。
+    *   Spotify认证状态 (`isAuthenticated`, `userInfo`)。
+
+### B. 页面与流程详细规划
+
+#### B.0. 全局认证检查
+*   **触发**: 应用加载时或关键操作前。
+*   **API**: `checkAuthStatus`, `getAuthUrl`.
+*   **UI**:
+    *   未认证: 显示登录/授权按钮 -> Spotify授权页。
+    *   已认证: 显示用户信息或允许操作。
+    *   处理Spotify认证回调。
+*   **状态**: `isAuthenticated`, `userInfo`.
+
+#### B.1. 页面: 输入歌曲列表 (`/` 或 `/input`)
+*   **目标**: 用户输入歌曲，调用API匹配。
+*   **UI组件**:
+    *   `<textarea>` (Shadcn UI Textarea) 用于歌曲输入。
+    *   "转换歌曲列表"按钮 (Shadcn UI Button)。
+*   **状态 (Zustand)**:
+    *   `rawSongList`: string
+    *   `isProcessingSongs`: boolean
+    *   `processSongsError`: string | null
+    *   `matchedSongsData`: ProcessSongsData | null
+*   **逻辑**:
+    1.  用户输入 -> 更新 `rawSongList`.
+    2.  点击按钮:
+        *   验证输入非空。
+        *   设置加载状态 (`isProcessingSongs = true`).
+        *   调用 `processSongs` API.
+        *   成功: 存 `matchedSongsData`, `isProcessingSongs = false`, 导航到 `/summary`.
+        *   失败: 存 `processSongsError`, `isProcessingSongs = false`, 显示错误.
+
+#### B.2. 页面: 概要与编辑 (`/summary`)
+*   **目标**: 展示匹配结果，用户编辑选择，输入新播放列表详情。
+*   **UI组件**:
+    *   统计信息 (总数、匹配数、未匹配数)。
+    *   匹配歌曲列表 (Shadcn UI Table or Cards) 带复选框 (Shadcn UI Checkbox)。
+    *   输入框: "播放列表名称" (Shadcn UI Input).
+    *   文本区域: "播放列表描述" (Shadcn UI Textarea).
+    *   切换开关: "是否公开" (Shadcn UI Switch).
+    *   "创建播放列表"按钮.
+*   **状态 (Zustand)**:
+    *   `matchedSongsData` (来自上一步).
+    *   `selectedSongUris`: string[] (用户选择的URI).
+    *   `newPlaylistName`: string.
+    *   `newPlaylistDescription`: string.
+    *   `isPlaylistPublic`: boolean.
+    *   `isCreatingPlaylist`: boolean.
+    *   `createPlaylistError`: string | null.
+    *   `createdPlaylistData`: CreatePlaylistData | null.
+*   **逻辑**:
+    1.  加载 `matchedSongsData`, 初始化 `selectedSongUris`.
+    2.  用户编辑选择 -> 更新 `selectedSongUris`.
+    3.  用户输入播放列表详情 -> 更新对应状态.
+    4.  点击按钮:
+        *   验证输入 (`newPlaylistName`, `selectedSongUris` 非空).
+        *   设置加载状态 (`isCreatingPlaylist = true`).
+        *   调用 `createPlaylistAndAddSongs` API.
+        *   成功: 存 `createdPlaylistData`, `isCreatingPlaylist = false`, 导航到 `/completed`.
+        *   失败: 存 `createPlaylistError`, `isCreatingPlaylist = false`, 显示错误.
+
+#### B.3. 页面: 完成 (`/completed`)
+*   **目标**: 显示成功信息和播放列表链接。
+*   **UI组件**:
+    *   成功提示信息。
+    *   链接到Spotify播放列表 (使用 `createdPlaylistData.playlist_url`).
+    *   "创建另一个播放列表"按钮.
+*   **状态 (Zustand)**:
+    *   `createdPlaylistData` (来自上一步).
+*   **逻辑**:
+    1.  加载 `createdPlaylistData`, 显示信息.
+    2.  点击"创建另一个": 重置相关Zustand状态, 导航到 `/` 或 `/input`.
+
+## 阶段 14: 前后端API联调与授权流程优化
+
+**核心目标**: 解决当前前后端连接问题，并根据用户反馈优化Spotify授权流程，明确区分项目API凭证和用户授权令牌的使用。
+
+### 14.1 后端API与连接问题修复
+- [x] **14.1.1: 仔细检查并修复CORS配置:**
+    - [x] 确保FastAPI后端已正确配置CORS中间件，允许来自前端Next.js应用源的请求。
+    - [x] 验证允许的HTTP方法 (`GET`, `POST`, `OPTIONS`等) 和头部信息。
+- [x] **14.1.2: 调查并解决后端日志中的重定向问题:**
+    - [x] 分析FastAPI和uvicorn日志，确定是什么原因导致了重定向 (如果问题持续存在)。
+    - [x] 确保所有API端点（尤其是认证回调 `/api/auth-callback`）能正确处理各种情况下的请求，避免不必要的重定向。
+- [x] **14.1.3: 统一并验证URL配置的灵活性与正确性:**
+    - [x] 确保前后端所有相关URL（API基地址、回调地址）通过环境变量进行配置，而不是硬编码。
+    - [x] 开发环境下，验证这些环境变量配置（例如，前端指向 `http://localhost:8888`，Spotify回调指向 `http://localhost:3000/callback` 或相应的后端回调）能使本地联调正常工作。
+    - [x] 规划生产环境的URL配置策略，确保部署时可以方便地将这些URL指向实际的服务器地址和域名。
+
+### 14.2 Spotify授权流程优化与API调用分离
+- [x] **14.2.1: 后端调整 - 用户授权与项目凭证分离:**
+    - [x] **认证状态接口 (`/api/auth-status`):**
+        - [x] 修改此接口，使其不仅返回用户是否通过本应用授权Spotify (`isAuthenticated`, `userInfo`)，还应尝试检测用户在浏览器中是否已登录Spotify主站（这可能需要前端辅助或不同的策略）。
+        - [x] 如果可能，区分"用户已登录Spotify但未授权本应用"和"用户未登录Spotify"。
+    - [x] **获取授权URL接口 (`/api/auth-url`):**
+        - [x] 确保此接口生成的Spotify授权URL包含所有必要的`scope`，以支持后续代表用户创建播放列表和添加歌曲 (如 `playlist-modify-public`, `playlist-modify-private`等)。
+    - [x] **歌曲处理接口 (`/api/process-songs`):**
+        - [x] **重要**: 此接口的Spotify API调用（搜索歌曲）**必须**使用项目自身配置的Spotify API凭证（Client ID & Secret, 通过服务器到服务器的认证流程获取访问令牌），**而不是**用户的授权令牌。这意味着后端需要一套独立的机制来管理和刷新项目自身的Spotify访问令牌。
+    - [x] **播放列表创建接口 (`/api/create-playlist` 或 `/api/create-playlist-and-add-songs`):**
+        - [x] 此接口的Spotify API调用（创建播放列表、添加歌曲）**必须**使用用户通过前端OAuth流程授予的访问令牌。
+        - [x] 后端需要能够安全地接收、存储（例如在session或安全cookie中）和使用这个用户特定的令牌。
+- [x] **14.2.2: 前端调整 - 适配新的授权流程:**
+    - [x] **`AuthCheck.tsx` 组件 (或等效全局认证逻辑):**
+        - [x] 调用新的 `/api/auth-status`，根据返回结果处理UI：
+            -   如果用户未登录Spotify：提示用户登录Spotify，然后引导授权本应用。
+            -   如果用户已登录Spotify但未授权本应用：直接引导授权本应用。
+            -   如果用户已授权本应用：显示用户信息。
+        - [x] 授权按钮点击后，从 `/api/auth-url` 获取Spotify授权链接并引导用户跳转。
+        - [x] 正确处理Spotify通过 `/callback` (前端Next.js路由) -> `/api/auth-callback` (后端API) 返回的授权码或错误。
+    - [x] **歌曲搜索流程:**
+        - [x] 用户在前端输入歌曲列表并点击"转换"后，前端调用后端的 `/api/process-songs`。此过程**不应**依赖用户是否已登录或授权Spotify，因为后端会使用项目凭证进行搜索。
+    - [x] **播放列表创建流程:**
+        - [x] 当用户在摘要页确认要创建播放列表时，前端**必须**确保用户已通过本应用授权Spotify。如果未授权，应先引导用户完成授权。
+        - [x] 调用 `/api/create-playlist` 时，后端会使用先前存储的用户授权令牌。
+- [x] **14.2.3: 后端Token管理:**
+    - [x] 实现一个健壮的机制来管理项目自身的Spotify API访问令牌（用于歌曲搜索），包括自动刷新过期的令牌。
+    - [x] 实现一个安全的机制来处理和临时存储用户授予的访问令牌（用于播放列表操作），确保令牌与用户会话关联。
+
+### 14.3 用户体验与错误处理优化
+- [x] **14.3.1: 优化授权提示信息:**
+    - [x] 在前端授权流程的各个步骤中，提供清晰、准确的提示信息，告知用户为何需要授权以及授权的范围。
+    - [x] 明确区分"登录Spotify"和"授权本应用访问您的Spotify数据"。
+- [x] **14.3.2: 完善错误处理机制:**
+    - [x] 对授权失败、API调用失败（无论是项目凭证调用还是用户令牌调用）等情况，在前端提供明确的错误提示和可能的解决建议。
+    - [x] 后端API在返回错误时，应包含足够的信息供前端展示和调试。
+
+### 14.4 测试与验证
+- [ ] **14.4.1: 连接与CORS测试:**
+    - [ ] 验证前端能够无障碍地调用所有后端API端点。
+- [ ] **14.4.2: 授权流程端到端测试:**
+    - [ ] 测试用户未登录Spotify的完整流程。
+    - [ ] 测试用户已登录Spotify但未授权本应用的流程。
+    - [ ] 测试用户已授权后的歌曲处理和播放列表创建流程。
+    - [ ] 测试令牌刷新机制（项目令牌和用户令牌，如果可能）。
+- [ ] **14.4.3: API调用权限验证:**
+    - [ ] 确认歌曲搜索 (`/api/process-songs`) 确实使用的是项目凭证（例如，通过临时移除用户授权来测试）。
+    - [ ] 确认播放列表创建 (`/api/create-playlist`) 确实使用的是用户授权令牌。
+
+## 阶段15: 修正 Spotify OAuth 授权流程
+
+**目标:** 解决用户授权 Spotify 后重定向错误的问题，确保前后端正确处理 OAuth 流程，实现用户授权、token 获取与存储、以及后续 API 的安全调用。
+
+**核心问题定位:** 当前 Spotify OAuth 授权后的重定向逻辑混乱，前端可能错误地尝试处理本应由后端处理的回调。
+
+**正确流程概述:**
+1.  前端引导用户跳转至 Spotify 授权页面。
+2.  用户授权后，Spotify 重定向至后端配置的 `/callback` URI，并附带授权码 (code)。
+3.  后端 `/callback` 端点接收授权码，用其换取 access token 和 refresh token。
+4.  后端安全存储用户 token。
+5.  后端将用户重定向回前端指定页面（例如 `/auth-success` 或 `/auth-error`），并携带状态信息。
+6.  前端根据后端重定向的状态更新 UI。
+7.  后续所有代表用户的 Spotify API 调用均由后端发起，使用存储的 access token。
+
+---
+
+### 子任务与修改点:
+
+#### 1. Spotify Developer Dashboard 配置核查
+
+*   **负责人:** [待分配]
+*   **任务:**
+    *   [x] 确认在 Spotify Developer Dashboard 中配置的 **Redirect URI** 仍然是 `http://127.0.0.1:8888/callback` (后端 Python 服务的地址)。
+    *   [x] (备注) 生产环境此 URI 应为 HTTPS 公网地址。
+
+#### 2. 前端 (Next.js @merged) 修改
+
+*   **负责人:** [待分配]
+*   **任务:**
+    *   [x] **发起 Spotify 授权请求逻辑调整:**
+        *   [x] 构建指向 Spotify 授权端点 (`https://accounts.spotify.com/authorize`) 的 URL。
+        *   [x] URL 参数包含:
+            *   `client_id`: 你的 Spotify 应用 Client ID。
+            *   `response_type`: `code`。
+            *   `redirect_uri`: **必须是后端的回调地址** (`http://127.0.0.1:8888/callback`)。
+            *   `scope`: 应用所需的权限 (例如 `playlist-modify-public`, `user-read-private`)。
+            *   `state`: (推荐) 添加随机生成的字符串用于 CSRF 防护，可临时存储在前端。
+        *   [x] 通过 `window.location.href` 重定向用户到 Spotify。
+    *   [x] **处理授权后的流程 (等待后端重定向):**
+        *   [x] 创建前端路由/页面用于接收后端处理完 OAuth 回调后的重定向，例如:
+            *   `/spotify-auth-success`
+            *   `/spotify-auth-error`
+        *   [x] 在这些页面中，根据后端重定向时附加的 URL 参数 (如 `?status=success` 或 `?error=true`) 更新 UI，向用户展示授权结果。
+        *   [x] 确保前端不再尝试直接处理 `http://127.0.0.1:8888/callback?code=...`。
+
+#### 3. 后端 (Python @spotify_playlist_importer) 修改
+
+*   **负责人:** [待分配]
+*   **任务:**
+    *   [x] **`/callback` 端点实现/增强 (例如，在 `run_fixed_api.py` 中):**
+        *   [x] 能够接收 Spotify 回调 URL 中的 `code` 和 `state` 参数。
+        *   [x] (如果使用 `state`) 验证 `state` 参数的有效性。
+        *   [x] **实现 Token交换逻辑:**
+            *   [x] 向 Spotify token 端点 (`https://accounts.spotify.com/api/token`) 发送 POST 请求。
+            *   [x] 请求头: `Content-Type: application/x-www-form-urlencoded` 和 `Authorization: Basic <base64_encoded_client_id:client_secret>` (或在 body 中传递 client_id/secret)。
+            *   [x] 请求体:
+                *   `grant_type`: `authorization_code`
+                *   `code`: 收到的授权码
+                *   `redirect_uri`: `http://127.0.0.1:8888/callback` (必须与配置和请求时的一致)
+        *   [x] **安全存储 Token:**
+            *   [x] 将获取到的 `access_token` 和 `refresh_token` 与用户关联并安全存储（例如，加密后存入数据库）。
+        *   [x] **重定向回前端:**
+            *   [x] Token 处理成功后，将用户重定向回前端的成功页面 (如 `http://localhost:3000/spotify-auth-success?status=true`)。
+            *   [x] 若处理失败，重定向回前端的错误页面 (如 `http://localhost:3000/spotify-auth-error?message=token_exchange_failed`)。
+    *   [x] **后端调用 Spotify API 逻辑调整:**
+        *   [x] **用户特定 API 调用:**
+            *   [x] 从存储中检索对应用户的 `access_token`。
+            *   [x] 在请求 Spotify API 时，于 `Authorization` 头中携带 `Bearer YOUR_USER_ACCESS_TOKEN`。
+            *   [x] **实现 Token 刷新逻辑:** 如果 API 返回 401 (token 过期)，使用 `refresh_token` 向 Spotify token 端点请求新的 `access_token`。
+                *   请求体: `grant_type: refresh_token`, `refresh_token: USER_REFRESH_TOKEN`。
+                *   请求头同上。
+                *   [x] 更新存储中的 token。
+        *   [x] **应用级别 API 调用 (如果需要):**
+            *   [x] 使用 Client Credentials Flow (`grant_type: client_credentials`) 获取应用级 access token。
+
+#### 4. 前后端通信 (针对用户操作，如歌曲处理)
+
+*   **负责人:** [待分配]
+*   **任务:**
+    *   [] 确认前端将用户输入（如歌曲文本）发送到后端专用 API 端点。
+    *   [] 后端在该端点:
+        *   [] 验证用户身份。
+        *   [] 获取该用户的 Spotify `access_token`。
+        *   [] 使用 token 调用 Spotify API。
+        *   [] 返回处理结果给前端。
+
+---
+**验收标准:**
+*   用户可以从前端发起 Spotify 登录。
+*   用户在 Spotify 成功授权后，被正确重定向回前端应用，并看到授权成功的提示。
+*   后端成功获取并存储了用户的 access token 和 refresh token。
+*   后续用户在前端进行需要 Spotify API 的操作（如搜索、添加歌曲）时，后端能够使用正确的用户 token 代表用户执行操作。
+*   Access token 过期后，后端能够自动使用 refresh token 刷新。
+
+---
+
+## XVI. 修复 MatchedSong 初始化与兼容性问题 (Stage 16)
+
+**核心目标**: 解决 `MatchedSong.__init__() got an unexpected keyword argument 'original_line'` 的 `TypeError`，并确保 `MatchedSong` 模型能够存储原始输入行信息，以兼容纯后端脚本的报告生成需求及增强前后端联调后的信息展示。
+
+### 16.1 修改 `MatchedSong` 模型类 (`spotify_playlist_importer/core/models.py` 或类似路径)
+- [ ] **16.1.1: 定位 `MatchedSong` 类定义。**
+- [ ] **16.1.2: 在 `__init__` 方法参数列表中添加 `original_line`:**
+    - [ ] 参数定义为 `original_line: Optional[str] = None`，使其成为可选参数并提供默认值，以保证向后兼容性。
+- [ ] **16.1.3: 在 `__init__` 方法内部赋值:**
+    - [ ] 添加 `self.original_line: Optional[str] = original_line`，将传入的参数保存为实例属性。
+- [ ] **16.1.4: 确认类型提示已更新 (如使用 `typing.Optional`)。**
+
+### 16.2 验证调用点 (无需修改，仅验证)
+- [ ] **16.2.1: 验证 `spotify_playlist_importer/spotify/sync_client.py` (约 L469):**
+    - [ ] 确认 `create_matched_song(best_match, parsed_song.original_line)` 的调用方式保持不变。
+- [ ] **16.2.2: 验证 `spotify_playlist_importer/spotify/matcher.py` (约 L214):**
+    - [ ] 确认 `return MatchedSong(...)` 在实例化时传递了 `original_line`（或其对应变量）。
+
+### 16.3 兼容性与影响评估
+- [ ] **16.3.1: 评估对纯后端脚本（如果仍在使用）的影响:**
+    - [ ] 确认旧的、可能不传递 `original_line` 的 `MatchedSong` 实例化代码路径不会因本次修改而报错。
+- [ ] **16.3.2: 评估对当前前后端结合版本的影响:**
+    - [ ] 确认 `TypeError` 已解决。
+    - [ ] 确认 `/api/process-songs` 的响应（如果包含 `MatchedSong` 序列化对象）现在可以包含 `original_line` 字段。
+    - [ ] 评估前端是否可以利用此新增字段来改进用户界面展示。
+
+### 16.4 (可选) 更新Pydantic模型/TypeScript接口
+- [ ] **16.4.1: 如果API响应基于Pydantic模型，更新相关模型以包含 `original_line: Optional[str]`。**
+- [ ] **16.4.2: 如果前端有对应的TypeScript接口定义，同步更新这些接口。**
+
+### 16.5 测试与验证
+- [ ] **16.5.1: 重新运行导致 `TypeError` 的测试场景:**
+    - [ ] 确认错误已消失，歌曲匹配流程可以完整执行。
+- [ ] **16.5.2: 检查匹配报告/API响应:**
+    - [ ] 确认 `original_line` 信息已正确包含在 `MatchedSong` 对象及相关的输出中。
+- [ ] **16.5.3: 回归测试:**
+    - [ ] 确保此修改未对其他匹配逻辑或功能产生负面影响。
+
+---
