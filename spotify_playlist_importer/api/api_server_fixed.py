@@ -35,18 +35,30 @@ class PreflightCORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.method == "OPTIONS":
             logger.info(f"处理预检请求: {request.url.path}")
+            
+            # 获取请求头中的Origin
+            origin = request.headers.get("Origin", "")
+            logger.info(f"预检请求来源: {origin}")
+            
+            # 当使用credentials=true时，不能使用*作为Allow-Origin
+            # 必须明确指定Origin，或者根据请求中的Origin头动态设置
+            allow_origin = origin if origin else "null"
+            
             # 返回预检响应
             response = Response(
                 status_code=200,
                 headers={
-                    "Access-Control-Allow-Origin": FRONTEND_URL,
+                    "Access-Control-Allow-Origin": allow_origin,
                     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Cookie",
                     "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Max-Age": "3600",
+                    "Vary": "Origin",  # 添加Vary头，告诉缓存根据Origin变化
                 }
             )
+            logger.info(f"返回预检响应，允许来源: {allow_origin}")
             return response
+            
         # 处理非预检请求
         return await call_next(request)
 
@@ -57,9 +69,10 @@ app.add_middleware(PreflightCORSMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        FRONTEND_URL,             # 前端URL
-        "http://localhost:3000",  # 本地开发前端
-        BACKEND_URL,              # 后端URL
+        "https://music-move.vercel.app",
+        "http://localhost:3000",
+        "https://music-move.onrender.com",
+        # 添加任何其他前端URL
     ],
     allow_credentials=True,  # 允许跨域请求携带凭据（Cookie）
     allow_methods=["*"],
