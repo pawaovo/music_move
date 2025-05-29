@@ -30,7 +30,10 @@ tasks/
 # Spotify API 相关敏感文件
 .spotify_cache
 .cache
-spotify_config.json
+*/spotify_config.json
+spotify_playlist_importer/.spotify_cache
+spotify_playlist_importer/.spotify_user_tokens/
+spotify_playlist_importer/.cache
 *.pem
 *.key
 __pycache__/
@@ -56,4 +59,7 @@ var/
 
 # 从 Git 中移除的项目特定目录
 .cursor/
-docs/ 
+docs/
+
+# 确保 spotify_playlist_importer 目录不被忽略，但其中的敏感文件仍被忽略
+!spotify_playlist_importer/ 

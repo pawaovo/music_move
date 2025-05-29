@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spotify-playlist-importer"
+version = "0.1.0"
+description = "Spotify歌单导入工具"
+authors = [
+    {name = "Your Name", email = "you@example.com"}
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.scripts]
+spotify-playlist-importer = "spotify_playlist_importer.__main__:main"
+importer = "spotify_playlist_importer.main:cli"
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203,W503"
+
+[tool.isort]
+profile = "black" 
