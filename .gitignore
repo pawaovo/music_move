@@ -52,4 +52,8 @@ sdist/
 var/
 *.egg-info/
 .installed.cfg
-*.egg 
+*.egg
+
+# 从 Git 中移除的项目特定目录
+.cursor/
+docs/ 
