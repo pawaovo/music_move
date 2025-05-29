@@ -70,7 +70,7 @@ async def get_or_create_session_id(
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain="music-move.onrender.com"  # 指定Cookie所属的域名
+            domain=None       # 使用请求的主机名
         )
     return session_id
 
@@ -113,7 +113,7 @@ async def auth_status(
         httponly=True,
         samesite="none",  # 允许跨站请求
         secure=True,      # 只在HTTPS连接中发送
-        domain="music-move.onrender.com"  # 指定Cookie所属的域名
+        domain=None       # 使用请求的主机名
     )
     
     try:
@@ -184,7 +184,7 @@ async def get_spotify_auth_url(
         httponly=True,
         samesite="none",  # 允许跨站请求
         secure=True,      # 只在HTTPS连接中发送
-        domain="music-move.onrender.com"  # 指定Cookie所属的域名
+        domain=None       # 使用请求的主机名
     )
     
     try:
@@ -269,7 +269,7 @@ async def spotify_callback(
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain="music-move.onrender.com"  # 指定Cookie所属的域名
+            domain=None       # 使用请求的主机名
         )
         
         return redirect_response
@@ -290,7 +290,7 @@ async def spotify_callback(
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain="music-move.onrender.com"  # 指定Cookie所属的域名
+            domain=None       # 使用请求的主机名
         )
         
         return redirect_response
@@ -319,7 +319,7 @@ async def spotify_callback(
                 httponly=True,
                 samesite="none",  # 允许跨站请求
                 secure=True,      # 只在HTTPS连接中发送
-                domain="music-move.onrender.com"  # 指定Cookie所属的域名
+                domain=None       # 使用请求的主机名
             )
             
             return redirect_response
@@ -340,7 +340,7 @@ async def spotify_callback(
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain="music-move.onrender.com"  # 指定Cookie所属的域名
+            domain=None       # 使用请求的主机名
         )
         
         return redirect_response
@@ -361,7 +361,7 @@ async def spotify_callback(
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain="music-move.onrender.com"  # 指定Cookie所属的域名
+            domain=None       # 使用请求的主机名
         )
         
         return redirect_response
@@ -394,7 +394,7 @@ async def process_songs_endpoint(
         httponly=True,
         samesite="none",  # 允许跨站请求
         secure=True,      # 只在HTTPS连接中发送
-        domain="music-move.onrender.com"  # 指定Cookie所属的域名
+        domain=None       # 使用请求的主机名
     )
     
     try:
@@ -522,7 +522,7 @@ async def create_playlist_endpoint(
         httponly=True,
         samesite="none",  # 允许跨站请求
         secure=True,      # 只在HTTPS连接中发送
-        domain="music-move.onrender.com"  # 指定Cookie所属的域名
+        domain=None       # 使用请求的主机名
     )
     
     logger.info(f"收到创建播放列表请求，播放列表名称: {request_data.name}，歌曲数量: {len(request_data.uris)}")
@@ -611,7 +611,13 @@ async def logout_user(
     session_id: str = Depends(get_or_create_session_id)
 ):
     # 确保删除会话cookie
-    response.delete_cookie(key=SESSION_COOKIE_NAME)
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        samesite="none",  # 允许跨站请求
+        secure=True,      # 只在HTTPS连接中发送
+        domain=None       # 使用请求的主机名
+    )
     
     logger.info(f"用户请求登出，会话ID: {session_id}")
     
@@ -642,7 +648,7 @@ async def logout_user(
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain="music-move.onrender.com"  # 指定Cookie所属的域名
+            domain=None       # 使用请求的主机名
         )
         
         # 返回400而不是500，因为前端只需要知道登出操作尝试了，但失败了
