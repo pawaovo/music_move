@@ -9,34 +9,20 @@ DEFAULT_CONFIG_PATH = "config.json"
 
 # 尝试查找和加载.env文件
 def load_env_files():
-    """尝试在多个可能的位置加载.env文件"""
-    # 首先尝试在项目根目录加载
-    root_env = find_dotenv(usecwd=True)
-    if root_env:
-        load_dotenv(root_env)
-        print(f"已加载环境变量文件: {root_env}")
-        return True
+    """
+    尝试加载 .env 文件。
+    主要用于本地开发。在 Render 等部署环境中，环境变量应通过平台设置。
+    """
+    # 尝试从当前工作目录或其父目录加载 .env 文件
+    # find_dotenv 会从当前目录开始向上查找
+    loaded_path = find_dotenv(usecwd=True, raise_error_if_not_found=False)
     
-    # 然后尝试在spotify_playlist_importer子目录加载
-    subdir_env = find_dotenv(
-        filename='.env',
-        usecwd=True,
-        search_path=os.path.join(os.getcwd(), 'spotify_playlist_importer')
-    )
-    if subdir_env:
-        load_dotenv(subdir_env)
-        print(f"已加载环境变量文件: {subdir_env}")
-        return True
-    
-    # 如果没有找到，尝试在D盘指定路径加载(针对特定环境)
-    specific_path = "D:\\ai\\music_move\\spotify_playlist_importer\\.env"
-    if os.path.exists(specific_path):
-        load_dotenv(specific_path)
-        print(f"已加载环境变量文件: {specific_path}")
-        return True
-    
-    # 如果仍未找到，打印警告
-    print("警告: 未找到.env文件，将使用环境变量或默认值")
+    if loaded_path:
+        if load_dotenv(loaded_path, verbose=True): # verbose=True 会在加载时打印信息
+            print(f"已加载环境变量文件: {loaded_path}")
+            return True
+            
+    print("信息: 未找到 .env 文件或无法加载。应用将依赖于操作系统注入的环境变量。")
     return False
 
 # 加载.env文件
