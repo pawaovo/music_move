@@ -62,4 +62,11 @@ var/
 docs/
 
 # 确保 spotify_playlist_importer 目录不被忽略，但其中的敏感文件仍被忽略
-!spotify_playlist_importer/ 
+!spotify_playlist_importer/
+
+# Cursor编辑器相关文件
+.cursorignore
+.cursorindexingignore
+
+# 测试覆盖率文件
+.coverage 
