@@ -25,7 +25,7 @@ function SuccessPageContent() {
         
         // 添加重试机制，确保认证状态更新
         let retries = 0;
-        const maxRetries = 5; // 增加重试次数
+        const maxRetries = 8; // 增加重试次数
         let authSuccess = false;
         
         while (retries < maxRetries && !authSuccess) {
@@ -34,8 +34,14 @@ function SuccessPageContent() {
           
           // 首次检查前等待一段时间，确保后端有足够时间处理Cookie
           if (retries === 0) {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // 首次等待2秒
+            await new Promise(resolve => setTimeout(resolve, 3000)); // 首次等待3秒
           }
+          
+          // 手动检查Cookie存在性
+          const cookies = document.cookie;
+          console.log('当前Cookie:', cookies);
+          const hasSessionCookie = cookies.includes('spotify_session_id');
+          console.log('Session Cookie存在:', hasSessionCookie);
           
           const { isAuthenticated, userInfo } = await checkAuthStatus();
           
@@ -48,7 +54,7 @@ function SuccessPageContent() {
             console.log('未获取到用户信息，将重试...');
             retries++;
             // 等待时间随着重试次数增加
-            await new Promise(resolve => setTimeout(resolve, 1500 * retries)); // 逐渐增加等待时间
+            await new Promise(resolve => setTimeout(resolve, 2000 * retries)); // 逐渐增加等待时间
           }
         }
         
@@ -64,7 +70,7 @@ function SuccessPageContent() {
           console.warn('多次尝试后仍未获取到用户信息');
           setTimeout(() => {
             setRedirecting(false);
-            router.push('/?authRetry=true');  // 添加参数，让首页知道需要重试认证
+            router.push('/?authRetry=true&source=spotify-auth-success');  // 添加参数，让首页知道需要重试认证
           }, 3000); // 增加到3秒
         }
       } catch (error) {
@@ -72,7 +78,7 @@ function SuccessPageContent() {
         // 出错时也重定向回主页
         setTimeout(() => {
           setRedirecting(false);
-          router.push('/?authError=true');  // 添加错误参数
+          router.push('/?authError=true&source=spotify-auth-success');  // 添加错误参数
         }, 2500);
       }
     }

@@ -39,20 +39,44 @@ function HomeContent() {
     // 检查URL参数
     const authRetry = searchParams.get('authRetry');
     const authError = searchParams.get('authError');
+    const source = searchParams.get('source');
     
     if (authRetry === 'true' || authError === 'true' || !isAuthenticated) {
       console.log('检测到认证参数或未认证状态，刷新认证状态...');
+      console.log('来源页面:', source);
       
       const refreshAuthStatus = async () => {
         try {
           // 添加重试机制
           let retries = 0;
-          const maxRetries = 3;
+          const maxRetries = 5; // 增加重试次数
           let authSuccess = false;
+          
+          // 检查Cookie状态
+          const cookies = document.cookie;
+          console.log('当前Cookie:', cookies);
+          const hasSessionCookie = cookies.includes('spotify_session_id');
+          console.log('Session Cookie存在:', hasSessionCookie);
+          
+          // 如果从授权成功页面返回但没有Cookie，显示明确的错误
+          if (source === 'spotify-auth-success' && !hasSessionCookie) {
+            console.error('从授权页面返回但没有会话Cookie');
+            setProcessSongsError({
+              code: 'AUTH_COOKIE_MISSING',
+              message: '授权过程中出现问题：Cookie未正确设置。请检查您的浏览器是否阻止了第三方Cookie。',
+              details: '尝试在浏览器设置中允许第三方Cookie，或使用Chrome浏览器重试。'
+            } as ApiError);
+          }
           
           while (retries < maxRetries && !authSuccess) {
             console.log(`尝试刷新认证状态 (尝试 ${retries + 1}/${maxRetries})...`);
-            const { isAuthenticated, userInfo } = await checkAuthStatus();
+            
+            // 首次尝试前等待
+            if (retries === 0 && source === 'spotify-auth-success') {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            const { isAuthenticated, userInfo, error } = await checkAuthStatus();
             
             if (isAuthenticated && userInfo) {
               console.log('成功获取用户信息:', userInfo);
@@ -61,24 +85,36 @@ function HomeContent() {
               authSuccess = true;
               break;
             } else {
-              console.log('未获取到用户信息，将重试...');
+              console.log('未获取到用户信息，将重试...', error);
               retries++;
-              // 等待短暂时间后重试
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              // 等待时间随着重试次数增加
+              await new Promise(resolve => setTimeout(resolve, 1000 * retries));
             }
           }
           
-          if (!authSuccess) {
+          if (!authSuccess && source === 'spotify-auth-success') {
             console.warn('多次尝试后仍未获取到用户信息');
+            setProcessSongsError({
+              code: 'AUTH_FAILED',
+              message: '无法完成Spotify授权。请确保您已登录Spotify并授予本应用访问权限。',
+              details: '可能的原因：会话验证失败、Cookie问题或后端服务不可用。'
+            } as ApiError);
           }
         } catch (error) {
           console.error('刷新认证状态失败:', error);
+          if (source === 'spotify-auth-success') {
+            setProcessSongsError({
+              code: 'AUTH_ERROR',
+              message: '检查授权状态时出错。请刷新页面重试。',
+              details: error
+            } as ApiError);
+          }
         }
       };
       
       refreshAuthStatus();
     }
-  }, [searchParams, isAuthenticated, setAuthState]);
+  }, [searchParams, isAuthenticated, setAuthState, setProcessSongsError]);
   
   // 调试信息
   useEffect(() => {

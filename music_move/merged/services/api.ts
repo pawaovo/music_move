@@ -139,7 +139,7 @@ const fetchOptions: RequestInit = {
     'Accept': 'application/json',
   },
   mode: 'cors',
-  credentials: 'include', // 包含跨域请求的凭据（Cookie）
+  credentials: 'include', // 确保包含跨域请求的凭据（Cookie）
 };
 
 // 认证相关API
@@ -154,25 +154,53 @@ export async function checkAuthStatus(): Promise<AuthStatusResponse> {
     console.log('API基础URL:', API_BASE_URL);
     console.log('请求地址:', `${API_BASE_URL}/api/auth-status`);
     
-    const response = await fetch(`${API_BASE_URL}/api/auth-status`, {
-      method: 'GET',
-      ...fetchOptions,
-    });
+    // 增加重试机制
+    let retries = 0;
+    const maxRetries = 3;
+    let lastError: any = null;
     
-    console.log('收到认证状态响应:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
-    });
+    while (retries < maxRetries) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth-status`, {
+          method: 'GET',
+          ...fetchOptions,
+          credentials: 'include', // 确保包含跨域请求的凭据（Cookie）
+        });
+        
+        console.log('收到认证状态响应:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+        });
+        
+        const data = await handleApiResponse(response);
+        console.log('认证状态响应内容:', data);
+        
+        // 直接使用API返回的格式，不再尝试访问data.data
+        return {
+          isAuthenticated: data.is_authenticated || false,
+          userInfo: data.user_info || null,
+          spotifyLoginStatus: data.spotify_login_status || false
+        };
+      } catch (error) {
+        lastError = error;
+        console.error(`检查认证状态失败 (尝试 ${retries + 1}/${maxRetries}):`, error);
+        retries++;
+        
+        // 在重试前等待一段时间
+        if (retries < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+      }
+    }
     
-    const data = await handleApiResponse(response);
-    console.log('认证状态响应内容:', data);
-    
-    // 直接使用API返回的格式，不再尝试访问data.data
+    // 所有重试都失败
+    console.error('检查认证状态多次失败:', lastError);
     return {
-      isAuthenticated: data.is_authenticated || false,
-      userInfo: data.user_info || null,
-      spotifyLoginStatus: data.spotify_login_status || false
+      isAuthenticated: false,
+      userInfo: null,
+      spotifyLoginStatus: false,
+      error: handleFetchError(lastError)
     };
   } catch (error) {
     console.error('检查认证状态失败:', error);
