@@ -150,13 +150,23 @@ const fetchOptions: RequestInit = {
  */
 export async function checkAuthStatus(): Promise<AuthStatusResponse> {
   try {
+    console.log('开始检查认证状态...');
+    console.log('API基础URL:', API_BASE_URL);
+    console.log('请求地址:', `${API_BASE_URL}/api/auth-status`);
+    
     const response = await fetch(`${API_BASE_URL}/api/auth-status`, {
       method: 'GET',
       ...fetchOptions,
     });
     
+    console.log('收到认证状态响应:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+    });
+    
     const data = await handleApiResponse(response);
-    console.log('认证状态响应:', data);
+    console.log('认证状态响应内容:', data);
     
     // 直接使用API返回的格式，不再尝试访问data.data
     return {
