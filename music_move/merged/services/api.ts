@@ -1,7 +1,7 @@
 import { SpotifyUserInfo, ApiError, AuthStatusResponse, ProcessSongsData } from '../store/types';
 
 // API基础URL - 使用环境变量或默认值
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8888';
 // 修复API路径
 console.log('使用API基础URL:', API_BASE_URL);
 
@@ -11,7 +11,7 @@ function handleFetchError(error: any): string {
 
   // 网络连接错误
   if (error.message && error.message.includes('Failed to fetch')) {
-    return '网络连接错误：无法连接到后端服务。请确保后端服务在 http://localhost:8888 正常运行，或检查您的网络连接。';
+    return `网络连接错误：无法连接到后端服务。请确保后端服务在 ${API_BASE_URL} 正常运行，或检查您的网络连接。`;
   }
   
   // CORS错误
