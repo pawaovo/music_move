@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, Github, Info, AlertCircle, Loader2 } from "lucide-react"
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import StoreDemo from "../components/StoreDemo";
 import { useSongProcessStore, useAuthStore } from "../store/useStore";
@@ -9,7 +9,8 @@ import { useAppSteps, AppStep } from "../hooks/useAppSteps";
 import { processSongs, checkAuthStatus, getAuthUrl } from "../services/api";
 import { ProcessSongsData, ApiError } from "../store/types";
 
-export default function Home() {
+// 创建一个包含useSearchParams的组件
+function HomeContent() {
   // 使用 Zustand 状态管理
   const { 
     rawSongList, 
@@ -82,7 +83,6 @@ export default function Home() {
   // 调试信息
   useEffect(() => {
     console.log('当前页面路径:', currentStep);
-    console.log('API基础URL:', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8888');
     console.log('用户认证状态:', isAuthenticated ? '已认证' : '未认证');
   }, [currentStep, isAuthenticated]);
   
@@ -312,4 +312,20 @@ Beyoncé - Formation
       </main>
     </div>
   )
+}
+
+// 主页面组件，使用Suspense包裹HomeContent
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <div className="bg-[#282828] rounded-xl p-8 max-w-md w-full text-center">
+          <div className="animate-spin h-12 w-12 border-4 border-t-[#1DB954] border-r-[#1DB954] border-b-transparent border-l-transparent rounded-full mx-auto mb-4"></div>
+          <h1 className="text-white text-xl font-medium mb-2">加载中...</h1>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
+  );
 } 
