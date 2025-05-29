@@ -254,7 +254,14 @@ def get_auth_manager(session_id: Optional[str] = None) -> SpotifyOAuth:
         SpotifyOAuth: 认证管理器实例
     """
     # 从环境变量获取重定向URI，否则使用默认值
-    redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
+    # 优先使用SPOTIPY_REDIRECT_URI环境变量，然后尝试使用后端URL构建重定向URI
+    backend_url = os.environ.get("BACKEND_URL", "")
+    if backend_url:
+        default_redirect_uri = f"{backend_url}/callback"
+    else:
+        default_redirect_uri = "http://127.0.0.1:8888/callback"
+    
+    redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI", default_redirect_uri)
     
     # 确定缓存路径
     cache_path = USER_TOKEN_CACHE_PATH
