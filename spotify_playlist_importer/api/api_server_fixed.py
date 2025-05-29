@@ -14,6 +14,14 @@ from fastapi import status
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("spotify-playlist-importer-api")
 
+# 环境变量配置
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://music-move.vercel.app")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://music-move-backend.onrender.com")
+
+# 记录URL配置
+logger.info(f"前端URL: {FRONTEND_URL}")
+logger.info(f"后端URL: {BACKEND_URL}")
+
 # 创建FastAPI应用
 app = FastAPI(
     title="Spotify Playlist Importer API",
@@ -24,10 +32,16 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(","),
-    allow_credentials=True,
+    allow_origins=[
+        FRONTEND_URL,             # 前端URL
+        "http://localhost:3000",  # 本地开发前端
+        BACKEND_URL,              # 后端URL
+    ],
+    allow_credentials=True,  # 允许跨域请求携带凭据（Cookie）
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,  # 预检请求缓存时间
 )
 
 # 导入路由
@@ -55,8 +69,8 @@ async def spotify_callback_root(request: Request, response: Response):
     这个路由直接注册在主应用上，不通过router，用于处理Spotify回调。
     功能与/api/callback完全一致。
     """
-    # 获取前端URL（从环境变量中获取，默认为localhost:3000）
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    # 使用环境变量中的前端URL
+    frontend_url = FRONTEND_URL
     
     query_params = request.query_params
     code = query_params.get("code")
@@ -97,7 +111,9 @@ async def spotify_callback_root(request: Request, response: Response):
             value=session_id,
             max_age=60 * 60 * 24 * 30,  # 30天
             httponly=True,
-            samesite="lax"
+            samesite="none",  # 允许跨站请求
+            secure=True,      # 只在HTTPS连接中发送
+            domain=None       # 使用当前域名
         )
         
         return redirect_response
@@ -116,7 +132,9 @@ async def spotify_callback_root(request: Request, response: Response):
             value=session_id,
             max_age=60 * 60 * 24 * 30,  # 30天
             httponly=True,
-            samesite="lax"
+            samesite="none",  # 允许跨站请求
+            secure=True,      # 只在HTTPS连接中发送
+            domain=None       # 使用当前域名
         )
         
         return redirect_response
@@ -143,7 +161,9 @@ async def spotify_callback_root(request: Request, response: Response):
                 value=session_id,
                 max_age=60 * 60 * 24 * 30,  # 30天
                 httponly=True,
-                samesite="lax"
+                samesite="none",  # 允许跨站请求
+                secure=True,      # 只在HTTPS连接中发送
+                domain=None       # 使用当前域名
             )
             
             return redirect_response
@@ -162,7 +182,9 @@ async def spotify_callback_root(request: Request, response: Response):
             value=session_id,
             max_age=60 * 60 * 24 * 30,  # 30天
             httponly=True,
-            samesite="lax"
+            samesite="none",  # 允许跨站请求
+            secure=True,      # 只在HTTPS连接中发送
+            domain=None       # 使用当前域名
         )
         
         return redirect_response
@@ -181,7 +203,9 @@ async def spotify_callback_root(request: Request, response: Response):
             value=session_id,
             max_age=60 * 60 * 24 * 30,  # 30天
             httponly=True,
-            samesite="lax"
+            samesite="none",  # 允许跨站请求
+            secure=True,      # 只在HTTPS连接中发送
+            domain=None       # 使用当前域名
         )
         
         return redirect_response
