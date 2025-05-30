@@ -291,7 +291,7 @@ function HomeContent() {
               </div>
               {/* 进度文本 - 修改为居中显示 */}
               <p className="text-[#B3B3B3] text-sm text-center">
-                {processingProgress.current}/{processingProgress.total} 首歌曲 
+                {processingProgress.total} 首歌曲 
                 ({processingProgress.percent}%)
               </p>
             </div>
