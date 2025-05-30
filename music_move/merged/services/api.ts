@@ -1,4 +1,4 @@
-import { SpotifyUserInfo, ApiError, AuthStatusResponse, ProcessSongsData } from '../store/types';
+import { SpotifyUserInfo, ApiError, AuthStatusResponse, ProcessSongsData, MatchedSong, UnmatchedSong } from '../store/types';
 
 // API基础URL - 使用环境变量或默认值
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8888';
@@ -449,4 +449,104 @@ export async function createPlaylistAndAddSongs(
     console.error('创建播放列表失败:', error);
     throw new Error(handleFetchError(error));
   }
+}
+
+/**
+ * 分批处理大量歌曲列表
+ * 当歌曲数量超过阈值时，自动分批处理以提高稳定性和成功率
+ * @param songList 歌曲列表文本
+ * @param batchSize 每批处理的歌曲数量
+ * @param concurrency 并发数
+ * @param progressCallback 进度回调函数
+ * @returns 合并后的处理结果
+ */
+export async function processSongsInBatches(
+  songList: string, 
+  batchSize: number = 200, 
+  concurrency: number = 10,
+  progressCallback?: (current: number, total: number, batchResult?: ProcessSongsData) => void
+): Promise<ProcessSongsData> {
+  // 将歌曲列表按行分割
+  const songLines = songList.trim().split('\n').filter(line => line.trim() !== '');
+  const totalSongs = songLines.length;
+  
+  console.log(`开始分批处理 ${totalSongs} 首歌曲，每批 ${batchSize} 首`);
+  
+  // 如果歌曲数量小于阈值，直接处理
+  if (totalSongs <= batchSize) {
+    console.log('歌曲数量较少，直接处理');
+    return processSongs(songList, concurrency, 30);
+  }
+  
+  // 计算需要处理的批次数
+  const batchCount = Math.ceil(totalSongs / batchSize);
+  console.log(`共需处理 ${batchCount} 批次`);
+  
+  // 存储所有批次的处理结果
+  let allMatchedSongs: MatchedSong[] = [];
+  let allUnmatchedSongs: UnmatchedSong[] = [];
+  let totalProcessed = 0;
+  
+  // 逐批处理歌曲
+  for (let i = 0; i < batchCount; i++) {
+    const startIndex = i * batchSize;
+    const endIndex = Math.min((i + 1) * batchSize, totalSongs);
+    const currentBatchSize = endIndex - startIndex;
+    
+    console.log(`处理第 ${i + 1}/${batchCount} 批，歌曲索引 ${startIndex} 到 ${endIndex - 1}`);
+    
+    // 提取当前批次的歌曲
+    const batchSongList = songLines.slice(startIndex, endIndex).join('\n');
+    
+    try {
+      // 处理当前批次
+      const batchResult = await processSongs(batchSongList, concurrency, 30);
+      
+      // 合并结果
+      if (batchResult.matched_songs) {
+        allMatchedSongs = [...allMatchedSongs, ...batchResult.matched_songs];
+      }
+      
+      if (batchResult.unmatched_songs) {
+        allUnmatchedSongs = [...allUnmatchedSongs, ...batchResult.unmatched_songs];
+      }
+      
+      // 更新已处理数量
+      totalProcessed += currentBatchSize;
+      
+      // 调用进度回调
+      if (progressCallback) {
+        progressCallback(totalProcessed, totalSongs, batchResult);
+      }
+      
+      console.log(`第 ${i + 1} 批处理完成，已处理 ${totalProcessed}/${totalSongs} 首歌曲`);
+      console.log(`当前批次匹配成功: ${batchResult.matched_songs?.length || 0}, 未匹配: ${batchResult.unmatched_songs?.length || 0}`);
+      
+    } catch (error) {
+      console.error(`处理第 ${i + 1} 批歌曲时出错:`, error);
+      
+      // 如果处理中途出错，返回已处理的结果
+      if (totalProcessed > 0) {
+        console.log(`由于错误中断处理，返回已处理的 ${totalProcessed} 首歌曲结果`);
+        return {
+          total_songs: totalSongs,
+          matched_songs: allMatchedSongs,
+          unmatched_songs: [...allUnmatchedSongs, {
+            original_input: `批次 ${i + 1} 处理失败，包含 ${currentBatchSize} 首歌曲`,
+            reason: error instanceof Error ? error.message : '未知错误'
+          }]
+        };
+      }
+      
+      // 如果第一批就失败，则抛出错误
+      throw error;
+    }
+  }
+  
+  // 返回合并后的结果
+  return {
+    total_songs: totalSongs,
+    matched_songs: allMatchedSongs,
+    unmatched_songs: allUnmatchedSongs
+  };
 }

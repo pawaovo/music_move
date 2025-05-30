@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSongProcessStore, useAuthStore } from "../store/useStore";
 import { useAppSteps, AppStep } from "../hooks/useAppSteps";
-import { processSongs, checkAuthStatus, getAuthUrl } from "../services/api";
+import { processSongs, processSongsInBatches, checkAuthStatus, getAuthUrl } from "../services/api";
 import { ProcessSongsData, ApiError } from "../store/types";
 import AuthCheck from "../components/AuthCheck";
 
@@ -34,6 +34,9 @@ function HomeContent() {
   // 添加状态管理
   const [isCheckingAuth, setCheckingAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // 添加进度状态
+  const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0, percent: 0 });
   
   // 加载初始认证状态
   useEffect(() => {
@@ -103,7 +106,7 @@ function HomeContent() {
     console.log(`准备处理 ${songCount} 首歌曲`);
     
     if (songCount > 300) {
-      const confirm = window.confirm(`您输入了${songCount}首歌曲，数量较大可能导致处理较慢或失败。建议分批处理（每次不超过300首）。是否继续？`);
+      const confirm = window.confirm(`您输入了${songCount}首歌曲，数量较大可能导致处理较慢。系统将自动分批处理以提高稳定性。是否继续？`);
       if (!confirm) {
         return;
       }
@@ -144,12 +147,23 @@ function HomeContent() {
       // 设置加载状态
       setProcessingSongs(true);
       setProcessSongsError(null);
+      setProcessingProgress({ current: 0, total: songCount, percent: 0 });
       
       console.log('开始处理歌曲列表...');
       console.log('输入歌曲数量:', songCount);
       
-      // 调用真实 API 处理歌曲列表
-      const matchedSongsData = await processSongs(rawSongList);
+      // 使用分批处理函数，自动处理大量歌曲
+      const matchedSongsData = await processSongsInBatches(
+        rawSongList,
+        200, // 每批200首歌曲
+        10,  // 并发数10
+        (current, total, batchResult) => {
+          // 更新进度
+          const percent = Math.floor((current / total) * 100);
+          setProcessingProgress({ current, total, percent });
+          console.log(`处理进度: ${current}/${total} (${percent}%)`);
+        }
+      );
       
       // 详细记录API响应结构，帮助调试
       console.log('处理完成，匹配结果:', matchedSongsData);
@@ -219,16 +233,35 @@ function HomeContent() {
       } as ApiError);
     } finally {
       setProcessingSongs(false);
+      setProcessingProgress({ current: 0, total: 0, percent: 0 });
     }
   };
   
   return (
     <div className="min-h-screen bg-[#121212]">
-      {/* 全屏加载状态 */}
+      {/* 全屏加载状态 - 增加进度显示 */}
       {isProcessingSongs && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center flex-col">
           <Loader2 className="h-12 w-12 text-[#1DB954] animate-spin mb-4" />
           <p className="text-white text-lg font-medium">正在处理歌曲...</p>
+          
+          {processingProgress.total > 0 && (
+            <div className="w-64 mt-4">
+              {/* 进度条 */}
+              <div className="w-full bg-[#333333] rounded-full h-2.5 mb-2">
+                <div 
+                  className="bg-[#1DB954] h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${processingProgress.percent}%` }}
+                ></div>
+              </div>
+              {/* 进度文本 */}
+              <p className="text-[#B3B3B3] text-sm">
+                {processingProgress.current}/{processingProgress.total} 首歌曲 
+                ({processingProgress.percent}%)
+              </p>
+            </div>
+          )}
+          
           <p className="text-[#B3B3B3] text-sm mt-2">请稍候，这可能需要一些时间</p>
         </div>
       )}
