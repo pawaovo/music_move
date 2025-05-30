@@ -38,6 +38,39 @@ function HomeContent() {
   // 添加进度状态
   const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0, percent: 0 });
   
+  // 添加伪进度条更新逻辑
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
+    if (isProcessingSongs && processingProgress.total > 0) {
+      // 启动定时器，每20秒增加10%进度，最多到90%
+      // 注意：这是一个伪进度条，不反映实际处理进度，而是为了提高用户体验
+      timer = setInterval(() => {
+        setProcessingProgress(prev => {
+          // 如果当前进度已经达到或超过90%，则不再增加
+          if (prev.percent >= 90) {
+            return prev;
+          }
+          
+          // 计算新的进度百分比，增加10%但不超过90%
+          const newPercent = Math.min(prev.percent + 10, 90);
+          
+          return {
+            ...prev,
+            percent: newPercent
+          };
+        });
+      }, 20000); // 20秒
+    }
+    
+    // 清理函数
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [isProcessingSongs, processingProgress.total]);
+  
   // 加载初始认证状态
   useEffect(() => {
     let isMounted = true;
@@ -158,10 +191,12 @@ function HomeContent() {
         200, // 每批200首歌曲
         10,  // 并发数10
         (current, total, batchResult) => {
-          // 更新进度
-          const percent = Math.floor((current / total) * 100);
-          setProcessingProgress({ current, total, percent });
-          console.log(`处理进度: ${current}/${total} (${percent}%)`);
+          // 更新进度 - 只更新当前处理数量，不影响进度百分比
+          setProcessingProgress(prev => ({ 
+            ...prev, 
+            current
+          }));
+          console.log(`处理进度: ${current}/${total}`);
         }
       );
       
@@ -254,8 +289,8 @@ function HomeContent() {
                   style={{ width: `${processingProgress.percent}%` }}
                 ></div>
               </div>
-              {/* 进度文本 */}
-              <p className="text-[#B3B3B3] text-sm">
+              {/* 进度文本 - 修改为居中显示 */}
+              <p className="text-[#B3B3B3] text-sm text-center">
                 {processingProgress.current}/{processingProgress.total} 首歌曲 
                 ({processingProgress.percent}%)
               </p>
