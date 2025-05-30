@@ -322,6 +322,12 @@ export async function logout() {
  */
 export async function processSongs(songList: string, concurrency = 5, batchSize = 5) {
   try {
+    console.log('开始处理歌曲列表，总行数:', songList.trim().split('\n').length);
+    
+    // 设置更长的超时时间，处理大量数据
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分钟超时
+    
     const response = await fetch(`${API_BASE_URL}/api/process-songs`, {
       method: 'POST',
       ...fetchOptions,
@@ -329,11 +335,28 @@ export async function processSongs(songList: string, concurrency = 5, batchSize 
         song_list: songList,
         concurrency,
         batch_size: batchSize
-      })
+      }),
+      signal: controller.signal
     });
     
-    const responseData = await handleApiResponse(response);
-    console.log('处理歌曲API原始响应:', responseData);
+    // 清除超时计时器
+    clearTimeout(timeoutId);
+    
+    // 检查响应状态
+    if (!response.ok) {
+      console.error('处理歌曲API返回错误状态:', response.status, response.statusText);
+      throw await handleResponseError(response);
+    }
+    
+    // 尝试解析响应
+    let responseData;
+    try {
+      responseData = await response.json();
+      console.log('处理歌曲API原始响应:', responseData);
+    } catch (parseError) {
+      console.error('解析API响应失败:', parseError);
+      throw new Error('解析服务器响应失败，可能是因为数据量过大。请尝试减少歌曲数量或分批处理。');
+    }
     
     // 标准化响应格式：处理可能的嵌套数据结构
     let result: ProcessSongsData;
@@ -361,10 +384,22 @@ export async function processSongs(songList: string, concurrency = 5, batchSize 
     result.unmatched_songs = result.unmatched_songs || [];
     result.total_songs = result.total_songs || 0;
     
-    console.log('处理后的标准化数据:', result);
+    console.log('处理后的标准化数据结构:', {
+      total_songs: result.total_songs,
+      matched_songs_count: result.matched_songs.length,
+      unmatched_songs_count: result.unmatched_songs.length
+    });
+    
     return result;
-  } catch (error) {
+  } catch (error: any) { // 使用any类型处理错误
     console.error('处理歌曲列表失败:', error);
+    
+    // 处理AbortError（超时）
+    if (error.name === 'AbortError') {
+      throw new Error('处理歌曲请求超时。您的歌曲列表可能过大，请尝试减少歌曲数量或分批处理。');
+    }
+    
+    // 处理其他错误
     throw error instanceof Error ? error : new Error(handleFetchError(error));
   }
 }
