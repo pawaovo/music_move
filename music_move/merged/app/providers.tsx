@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode } from 'react';
-import AuthCheck from '@/components/AuthCheck';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -14,8 +13,7 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <>
-      {/* 全局认证检查组件 */}
-      <AuthCheck />
+      {/* 移除全局认证检查组件 */}
 
       {/* 页面内容 */}
       {children}

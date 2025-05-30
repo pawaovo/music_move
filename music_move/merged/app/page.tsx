@@ -202,18 +202,12 @@ function HomeContent() {
       <header className="bg-[#121212] p-6 border-b border-[#282828]">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
-            <div className="relative h-8 w-8 mr-2">
-              <div className="absolute inset-0 bg-[#1DB954] rounded-full opacity-90"></div>
-              <div className="absolute inset-[2px] bg-[#121212] rounded-full"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4">
-                <div className="absolute inset-0 border-t-2 border-r-2 border-[#1DB954] rounded-full animate-spin"></div>
-              </div>
-            </div>
+            {/* 移除左上角的图标动画，只保留文字 */}
             <span className="text-white text-xl font-semibold">MusicMove</span>
           </div>
           
-          {/* 导航按钮组 */}
-          <div className="flex items-center space-x-4">
+          {/* 导航按钮组 - 调整为right-0确保靠右显示 */}
+          <div className="flex items-center space-x-4 ml-auto">
             {/* GitHub 仓库链接 */}
             <a 
               href="https://github.com/pawaovo/music_move" 
