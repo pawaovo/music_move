@@ -320,7 +320,7 @@ export async function logout() {
  * @param batchSize 批处理大小
  * @returns 处理结果
  */
-export async function processSongs(songList: string, concurrency = 5, batchSize = 5) {
+export async function processSongs(songList: string, concurrency = 15, batchSize = 30) {
   try {
     console.log('开始处理歌曲列表，总行数:', songList.trim().split('\n').length);
     
