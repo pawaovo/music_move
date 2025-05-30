@@ -269,9 +269,21 @@ export async function refreshToken() {
 export async function logout() {
   try {
     console.log('调用登出API...');
+    
+    // 在发起请求前清除浏览器中的相关Cookie（如果存在）
+    // 这不会完全清除后端设置的Cookie，但有助于处理某些边缘情况
+    document.cookie.split(';').forEach(c => {
+      const cookieName = c.trim().split('=')[0];
+      if (cookieName.includes('spotify') || cookieName.includes('session')) {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=none;`;
+      }
+    });
+    
     const response = await fetch(`${API_BASE_URL}/api/logout`, {
       method: 'POST',
       ...fetchOptions,
+      // 确保携带凭证
+      credentials: 'include'
     });
     
     // 即使后端返回错误状态码，也视为成功，因为前端已经清除了登录状态
@@ -281,7 +293,17 @@ export async function logout() {
       return { status: "success", message: "用户已在前端登出" };
     }
     
-    return await handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    
+    // 再次尝试清除会话相关的Cookie
+    document.cookie.split(';').forEach(c => {
+      const cookieName = c.trim().split('=')[0];
+      if (cookieName.includes('spotify') || cookieName.includes('session')) {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=none;`;
+      }
+    });
+    
+    return result;
   } catch (error) {
     console.warn('登出API调用失败，但用户已在前端登出:', error);
     // 返回模拟成功

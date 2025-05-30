@@ -131,22 +131,47 @@ export default function AuthCheck() {
       console.log('开始登出操作...');
       setError(null);
       
-      // 先清除前端状态，确保即使API调用失败，用户体验上也是已登出状态
+      // 设置一个标志，避免在API请求过程中多次点击
+      if (isCheckingAuth) {
+        console.log('已经在处理登出请求，忽略重复点击');
+        return;
+      }
+      
+      // 设置检查标志，防止重复点击
+      setCheckingAuth(true);
+      
+      // 立即清除前端状态，确保UI立即响应
       setAuthState(false, null);
       // 重置Spotify登录状态
       setSpotifyLoginStatus('unknown');
       
       try {
         // 尝试调用后端登出API
-        await logout();
-        console.log('后端登出API调用成功');
+        const result = await logout();
+        console.log('后端登出API调用成功:', result);
+        
+        // 再次检查认证状态，确保前后端状态一致
+        setTimeout(async () => {
+          try {
+            // 静默检查一次认证状态
+            await checkAuthStatus();
+          } catch (error) {
+            console.error('登出后检查认证状态失败:', error);
+          } finally {
+            // 无论成功失败都恢复检查标志
+            setCheckingAuth(false);
+          }
+        }, 500);
       } catch (error) {
         // 即使后端API调用失败，也保持前端已登出状态
         console.error('后端登出API调用失败:', error);
+        // 恢复检查标志
+        setCheckingAuth(false);
         // 不显示错误给用户，因为前端已经清除了登录状态
       }
     } catch (error) {
       console.error('登出过程中发生意外错误:', error);
+      setCheckingAuth(false);
       // 即使在整个过程中出现错误，也不还原登录状态
     }
   };

@@ -31,90 +31,60 @@ function HomeContent() {
   // 搜索参数
   const searchParams = useSearchParams();
   
-  // 演示模式切换
+  // 添加状态管理
+  const [isCheckingAuth, setCheckingAuth] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showDemo, setShowDemo] = useState(false);
-
-  // 处理从认证页面返回
+  
+  // 加载初始认证状态
   useEffect(() => {
-    // 检查URL参数
-    const authRetry = searchParams.get('authRetry');
-    const authError = searchParams.get('authError');
-    const source = searchParams.get('source');
+    let isMounted = true;
     
-    if (authRetry === 'true' || authError === 'true' || !isAuthenticated) {
-      console.log('检测到认证参数或未认证状态，刷新认证状态...');
-      console.log('来源页面:', source);
+    async function checkAuth() {
+      if (!isMounted) return;
       
-      const refreshAuthStatus = async () => {
-        try {
-          // 添加重试机制
-          let retries = 0;
-          const maxRetries = 5; // 增加重试次数
-          let authSuccess = false;
-          
-          // 检查Cookie状态
-          const cookies = document.cookie;
-          console.log('当前Cookie:', cookies);
-          const hasSessionCookie = cookies.includes('spotify_session_id');
-          console.log('Session Cookie存在:', hasSessionCookie);
-          
-          // 如果从授权成功页面返回但没有Cookie，显示明确的错误
-          if (source === 'spotify-auth-success' && !hasSessionCookie) {
-            console.error('从授权页面返回但没有会话Cookie');
-            setProcessSongsError({
-              code: 'AUTH_COOKIE_MISSING',
-              message: '授权过程中出现问题：Cookie未正确设置。请检查您的浏览器是否阻止了第三方Cookie。',
-              details: '尝试在浏览器设置中允许第三方Cookie，或使用Chrome浏览器重试。'
-            } as ApiError);
-          }
-          
-          while (retries < maxRetries && !authSuccess) {
-            console.log(`尝试刷新认证状态 (尝试 ${retries + 1}/${maxRetries})...`);
-            
-            // 首次尝试前等待
-            if (retries === 0 && source === 'spotify-auth-success') {
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-            
-            const { isAuthenticated, userInfo, error } = await checkAuthStatus();
-            
-            if (isAuthenticated && userInfo) {
-              console.log('成功获取用户信息:', userInfo);
-              // 更新认证状态
-              setAuthState(isAuthenticated, userInfo);
-              authSuccess = true;
-              break;
-            } else {
-              console.log('未获取到用户信息，将重试...', error);
-              retries++;
-              // 等待时间随着重试次数增加
-              await new Promise(resolve => setTimeout(resolve, 1000 * retries));
-            }
-          }
-          
-          if (!authSuccess && source === 'spotify-auth-success') {
-            console.warn('多次尝试后仍未获取到用户信息');
-            setProcessSongsError({
-              code: 'AUTH_FAILED',
-              message: '无法完成Spotify授权。请确保您已登录Spotify并授予本应用访问权限。',
-              details: '可能的原因：会话验证失败、Cookie问题或后端服务不可用。'
-            } as ApiError);
-          }
-        } catch (error) {
-          console.error('刷新认证状态失败:', error);
-          if (source === 'spotify-auth-success') {
-            setProcessSongsError({
-              code: 'AUTH_ERROR',
-              message: '检查授权状态时出错。请刷新页面重试。',
-              details: error
-            } as ApiError);
-          }
+      console.log('首页加载，开始检查认证状态...');
+      setCheckingAuth(true);
+      
+      try {
+        const { isAuthenticated, userInfo, error } = await checkAuthStatus();
+        
+        // 如果组件已卸载，不要更新状态
+        if (!isMounted) return;
+        
+        if (error) {
+          console.error('首页检查认证状态出错:', error);
+          setError(error);
+          // 即使出错，也要更新认证状态，以防之前的状态是错误的
+          setAuthState(false, null);
+        } else {
+          console.log('首页认证状态已更新, 认证状态:', isAuthenticated, '用户信息:', userInfo);
+          setAuthState(isAuthenticated, userInfo);
         }
-      };
-      
-      refreshAuthStatus();
+      } catch (error) {
+        // 如果组件已卸载，不要更新状态
+        if (!isMounted) return;
+        
+        console.error('首页检查认证状态异常:', error);
+        // 出现异常时，为安全起见也设置为未认证状态
+        setAuthState(false, null);
+        setError(`检查认证状态失败: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        // 如果组件已卸载，不要更新状态
+        if (isMounted) {
+          setCheckingAuth(false);
+        }
+      }
     }
-  }, [searchParams, isAuthenticated, setAuthState, setProcessSongsError]);
+    
+    // 执行认证检查
+    checkAuth();
+    
+    // 组件卸载时设置标志
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 仅在组件挂载时执行一次
   
   // 调试信息
   useEffect(() => {

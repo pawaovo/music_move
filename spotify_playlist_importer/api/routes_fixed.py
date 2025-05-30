@@ -610,6 +610,13 @@ async def logout_user(
     response: Response,
     session_id: str = Depends(get_or_create_session_id)
 ):
+    logger.info(f"用户请求登出，会话ID: {session_id}")
+    
+    # 添加响应头，让浏览器知道不要缓存响应
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
     # 确保删除会话cookie
     response.delete_cookie(
         key=SESSION_COOKIE_NAME,
@@ -619,7 +626,12 @@ async def logout_user(
         domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
     )
     
-    logger.info(f"用户请求登出，会话ID: {session_id}")
+    # 删除相同cookie名称但不同配置的cookie
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        path="/",
+        domain=""
+    )
     
     try:
         # 获取认证管理器
@@ -649,6 +661,13 @@ async def logout_user(
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
             domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
+        )
+        
+        # 删除相同cookie名称但不同配置的cookie
+        response.delete_cookie(
+            key=SESSION_COOKIE_NAME,
+            path="/",
+            domain=""
         )
         
         # 返回400而不是500，因为前端只需要知道登出操作尝试了，但失败了
