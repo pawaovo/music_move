@@ -150,7 +150,7 @@ async def spotify_callback_root(request: Request, response: Response):
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain=None       # 使用请求的主机名
+            domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
         )
         
         return redirect_response
@@ -171,7 +171,7 @@ async def spotify_callback_root(request: Request, response: Response):
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain=None       # 使用请求的主机名
+            domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
         )
         
         return redirect_response
@@ -200,7 +200,7 @@ async def spotify_callback_root(request: Request, response: Response):
                 httponly=True,
                 samesite="none",  # 允许跨站请求
                 secure=True,      # 只在HTTPS连接中发送
-                domain=None       # 使用请求的主机名
+                domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
             )
             
             return redirect_response
@@ -221,7 +221,7 @@ async def spotify_callback_root(request: Request, response: Response):
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain=None       # 使用请求的主机名
+            domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
         )
         
         return redirect_response
@@ -242,7 +242,7 @@ async def spotify_callback_root(request: Request, response: Response):
             httponly=True,
             samesite="none",  # 允许跨站请求
             secure=True,      # 只在HTTPS连接中发送
-            domain=None       # 使用请求的主机名
+            domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
         )
         
         return redirect_response
