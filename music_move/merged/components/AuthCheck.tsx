@@ -211,7 +211,7 @@ export default function AuthCheck() {
   
   // 如果正在检查认证状态，显示加载状态
   if (isCheckingAuth) return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="flex items-center">
       <div className="flex items-center bg-[#282828] rounded-full p-2 pr-4 shadow-md">
         <RefreshCw className="h-4 w-4 mr-2 text-[#1DB954] animate-spin" />
         <span className="text-white text-sm">检查认证状态...</span>
@@ -221,8 +221,8 @@ export default function AuthCheck() {
   
   return (
     <>
-      {/* 认证状态显示/登录按钮 */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* 认证状态显示/登录按钮 - 整合到导航栏 */}
+      <div>
         {isAuthenticated && userInfo ? (
           <div className="flex items-center bg-[#282828] rounded-full p-1 pr-4 shadow-md">
             {userInfo.images && userInfo.images.length > 0 ? (

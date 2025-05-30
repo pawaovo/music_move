@@ -1,13 +1,13 @@
 'use client';
 
-import { ChevronLeft, Github, Info, AlertCircle, Loader2 } from "lucide-react"
+import { ChevronLeft, Github, Info, AlertCircle, Loader2, ExternalLink } from "lucide-react"
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import StoreDemo from "../components/StoreDemo";
 import { useSongProcessStore, useAuthStore } from "../store/useStore";
 import { useAppSteps, AppStep } from "../hooks/useAppSteps";
 import { processSongs, checkAuthStatus, getAuthUrl } from "../services/api";
 import { ProcessSongsData, ApiError } from "../store/types";
+import AuthCheck from "../components/AuthCheck";
 
 // 创建一个包含useSearchParams的组件
 function HomeContent() {
@@ -34,7 +34,6 @@ function HomeContent() {
   // 添加状态管理
   const [isCheckingAuth, setCheckingAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showDemo, setShowDemo] = useState(false);
   
   // 加载初始认证状态
   useEffect(() => {
@@ -212,16 +211,33 @@ function HomeContent() {
             </div>
             <span className="text-white text-xl font-semibold">MusicMove</span>
           </div>
+          
+          {/* 导航按钮组 */}
           <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => setShowDemo(!showDemo)}
-              className="text-white hover:text-[#1DB954] transition text-sm"
+            {/* GitHub 仓库链接 */}
+            <a 
+              href="https://github.com/pawaovo/music_move" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center text-white hover:text-[#1DB954] transition"
+              title="查看GitHub仓库"
             >
-              {showDemo ? '隐藏演示' : '显示演示'}
-            </button>
-            <a href="https://github.com" className="text-white hover:text-[#1DB954] transition">
               <Github className="h-5 w-5" />
             </a>
+            
+            {/* 歌单处理按钮 */}
+            <a 
+              href="https://music.unmeta.cn/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center bg-[#9945FF] hover:bg-[#8035DB] text-white rounded-full px-4 py-2 transition shadow-md"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              <span className="text-sm font-medium">歌单处理</span>
+            </a>
+            
+            {/* Spotify 认证按钮 */}
+            <AuthCheck />
           </div>
         </div>
       </header>
@@ -308,13 +324,6 @@ Beyoncé - Formation
             </div>
           )}
         </div>
-        
-        {/* 演示组件 */}
-        {showDemo && (
-          <div className="mt-8">
-            <StoreDemo />
-          </div>
-        )}
       </main>
     </div>
   )
