@@ -14,76 +14,51 @@ function SuccessPageContent() {
   const { setAuthState } = useAuthStore();
   
   useEffect(() => {
-    async function checkAuth() {
+    async function attemptAuthAndRedirect() {
+      const status = searchParams.get('status');
+      if (status !== 'true' && status !== 'success') {
+        console.warn('授权成功页面收到非成功状态:', status);
+        // 即使状态不是 'true' 或 'success'，也尝试检查一次认证并跳转
+      }
+
+      console.log('Spotify授权成功，开始检查认证状态并准备跳转...');
+
       try {
-        // 从URL参数中获取状态信息
-        const status = searchParams.get('status');
-        
-        if (status !== 'true' && status !== 'success') {
-          console.warn('授权成功页面收到非成功状态:', status);
-        }
-        
-        // 添加重试机制，确保认证状态更新
-        let retries = 0;
-        const maxRetries = 8; // 增加重试次数
-        let authSuccess = false;
-        
-        while (retries < maxRetries && !authSuccess) {
-          // 检查认证状态
-          console.log(`尝试检查认证状态 (尝试 ${retries + 1}/${maxRetries})...`);
-          
-          // 首次检查前等待一段时间，确保后端有足够时间处理Cookie
-          if (retries === 0) {
-            await new Promise(resolve => setTimeout(resolve, 3000)); // 首次等待3秒
-          }
-          
-          // 手动检查Cookie存在性
-          const cookies = document.cookie;
-          console.log('当前Cookie:', cookies);
-          const hasSessionCookie = cookies.includes('spotify_session_id');
-          console.log('Session Cookie存在:', hasSessionCookie);
-          
-          const { isAuthenticated, userInfo } = await checkAuthStatus();
-          
-          if (isAuthenticated && userInfo) {
-            console.log('成功获取用户信息:', userInfo);
-            // 更新认证状态
-            setAuthState(isAuthenticated, userInfo);
-            authSuccess = true;
-          } else {
-            console.log('未获取到用户信息，将重试...');
-            retries++;
-            // 等待时间随着重试次数增加
-            await new Promise(resolve => setTimeout(resolve, 2000 * retries)); // 逐渐增加等待时间
-          }
-        }
-        
-        // 成功获取用户信息后再重定向
-        if (authSuccess) {
-          console.log('认证状态已更新，即将重定向到首页...');
-          // 延长等待时间，确保状态更新完成
-          setTimeout(() => {
-            setRedirecting(false);
-            router.push('/');
-          }, 3000); // 增加到3秒
+        // 尝试检查认证状态，给后端一点时间设置cookie
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒，以便cookie设置
+
+        const { isAuthenticated, userInfo } = await checkAuthStatus();
+
+        if (isAuthenticated && userInfo) {
+          console.log('认证成功，用户信息:', userInfo, '即将跳转到首页。');
+          setAuthState(isAuthenticated, userInfo);
+          router.push('/');
         } else {
-          console.warn('多次尝试后仍未获取到用户信息');
-          setTimeout(() => {
-            setRedirecting(false);
-            router.push('/?authRetry=true&source=spotify-auth-success');  // 添加参数，让首页知道需要重试认证
-          }, 3000); // 增加到3秒
+          console.warn('授权回调后未能立即确认认证状态，尝试跳转到首页让其重新检查。');
+          // 即使未能立即确认，也跳转到首页，首页的AuthCheck会再次检查
+          // 或者可以尝试一次短暂的重试
+          await new Promise(resolve => setTimeout(resolve, 1500)); // 再等待1.5秒
+          const { isAuthenticated: retryIsAuthenticated, userInfo: retryUserInfo } = await checkAuthStatus();
+          if (retryIsAuthenticated && retryUserInfo) {
+            console.log('重试认证成功，用户信息:', retryUserInfo, '即将跳转到首页。');
+            setAuthState(retryIsAuthenticated, retryUserInfo);
+            router.push('/');
+          } else {
+            console.warn('重试后仍未认证，跳转到首页并带参数。');
+            router.push('/?authRetry=true&source=spotify-auth-success-simplified');
+          }
         }
       } catch (error) {
-        console.error('检查认证状态失败:', error);
-        // 出错时也重定向回主页
-        setTimeout(() => {
-          setRedirecting(false);
-          router.push('/?authError=true&source=spotify-auth-success');  // 添加错误参数
-        }, 2500);
+        console.error('在spotify-auth-success页面检查认证状态或跳转时出错:', error);
+        // 出错时也尝试跳转到首页
+        router.push('/?authError=true&source=spotify-auth-success-simplified-error');
+      } finally {
+        // 无论结果如何，都标记为不再重定向（虽然此时应该已经跳转了）
+        setRedirecting(false); 
       }
     }
-    
-    checkAuth();
+
+    attemptAuthAndRedirect();
   }, [searchParams, router, setAuthState]);
   
   return (
