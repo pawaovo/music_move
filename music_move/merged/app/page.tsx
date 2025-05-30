@@ -137,51 +137,99 @@ function HomeContent() {
       console.log('开始处理歌曲列表...');
       console.log('输入歌曲数量:', rawSongList.trim().split('\n').length);
       
-      // 调用真实 API 处理歌曲列表
-      const matchedSongsData = await processSongs(rawSongList);
+      let matchedSongsData;
+      try {
+        // 调用真实 API 处理歌曲列表
+        matchedSongsData = await processSongs(rawSongList);
+        
+        // 详细记录API响应结构，帮助调试
+        console.log('处理完成，匹配结果:', matchedSongsData);
+        console.log('API响应类型:', typeof matchedSongsData);
+        console.log('API响应结构:', JSON.stringify(matchedSongsData, null, 2));
+        console.log('matched_songs存在:', !!matchedSongsData.matched_songs);
+        console.log('unmatched_songs存在:', !!matchedSongsData.unmatched_songs);
+      } catch (processError) {
+        console.error('API调用失败，创建默认结果:', processError);
+        // 即使API调用失败，也创建一个默认的结果对象以允许用户继续
+        matchedSongsData = {
+          total_songs: rawSongList.trim().split('\n').length,
+          matched_songs: [],
+          unmatched_songs: rawSongList.trim().split('\n').map(song => ({ 
+            original_input: song, 
+            reason: '处理失败，可能是网络问题或服务器错误' 
+          }))
+        } as ProcessSongsData;
+        
+        // 记录错误，但不终止流程
+        setProcessSongsError({
+          code: 'PROCESS_WARNING',
+          message: '歌曲处理部分失败，但您仍可继续查看结果',
+          details: processError
+        } as ApiError);
+      }
       
-      // 详细记录API响应结构，帮助调试
-      console.log('处理完成，匹配结果:', matchedSongsData);
-      console.log('API响应类型:', typeof matchedSongsData);
-      console.log('API响应结构:', JSON.stringify(matchedSongsData, null, 2));
-      console.log('matched_songs存在:', !!matchedSongsData.matched_songs);
-      console.log('unmatched_songs存在:', !!matchedSongsData.unmatched_songs);
-      
+      // 确保数据结构完整
       if (!matchedSongsData.matched_songs) {
-        console.error('API响应中缺少matched_songs字段');
+        console.warn('API响应中缺少matched_songs字段');
         
         // 尝试修复结构问题 - 如果API响应不符合预期格式
         if (matchedSongsData && typeof matchedSongsData === 'object' && 'data' in matchedSongsData && 
             matchedSongsData.data && typeof matchedSongsData.data === 'object' && 
             'matched_songs' in matchedSongsData.data) {
           console.log('尝试从data嵌套对象中获取匹配数据');
-          // @ts-ignore - 处理可能的嵌套数据结构
-          setMatchedSongsData(matchedSongsData.data);
+          // 从嵌套结构中提取数据并进行类型断言
+          matchedSongsData = matchedSongsData.data as ProcessSongsData;
         } else {
-          // 如果无法找到嵌套的数据，至少确保字段存在
-          setMatchedSongsData({
-            ...matchedSongsData,
-            matched_songs: matchedSongsData.matched_songs || [],
-            unmatched_songs: matchedSongsData.unmatched_songs || []
-          });
+          // 如果无法找到嵌套的数据，确保字段存在
+          const standardizedData: ProcessSongsData = {
+            total_songs: matchedSongsData.total_songs || rawSongList.trim().split('\n').length,
+            matched_songs: Array.isArray(matchedSongsData.matched_songs) ? matchedSongsData.matched_songs : [],
+            unmatched_songs: Array.isArray(matchedSongsData.unmatched_songs) ? matchedSongsData.unmatched_songs : []
+          };
+          matchedSongsData = standardizedData;
         }
-      } else {
-        // 保存匹配结果
-        setMatchedSongsData(matchedSongsData);
       }
       
+      // 保存匹配结果 - 确保matchedSongsData符合ProcessSongsData类型
+      setMatchedSongsData(matchedSongsData as ProcessSongsData);
+      
       // 清除本地存储中的初始化标志，确保可以正确初始化新的歌曲集
-      localStorage.removeItem(`selection-initialized-${matchedSongsData.total_songs}`);
+      localStorage.removeItem(`selection-initialized-${(matchedSongsData as ProcessSongsData).total_songs}`);
       
       // 添加延迟确保状态更新完成后再跳转
       setTimeout(() => {
         // 处理完成后，跳转到概要页
         console.log('正在跳转到概要页...');
         goToSummaryStep();
-      }, 100);
+      }, 500); // 增加延迟时间，确保状态已更新
     } catch (error) {
       console.error('处理歌曲列表失败:', error);
       setProcessSongsError(error as ApiError);
+      
+      // 即使出现错误，也尝试使用已有数据跳转到概要页
+      try {
+        if (rawSongList.trim()) {
+          const defaultData: ProcessSongsData = {
+            total_songs: rawSongList.trim().split('\n').length,
+            matched_songs: [],
+            unmatched_songs: rawSongList.trim().split('\n').map(song => ({ 
+              original_input: song, 
+              reason: '处理失败，可能是网络问题或服务器错误' 
+            }))
+          };
+          
+          setMatchedSongsData(defaultData);
+          
+          // 延迟跳转，确保用户看到错误信息
+          setTimeout(() => {
+            console.log('尽管有错误，仍尝试跳转到概要页...');
+            goToSummaryStep();
+          }, 1500);
+        }
+      } catch (fallbackError) {
+        console.error('创建备用数据失败:', fallbackError);
+        // 在这种情况下只能留在当前页面
+      }
     } finally {
       setProcessingSongs(false);
     }
