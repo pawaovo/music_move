@@ -320,13 +320,13 @@ export async function logout() {
  * @param batchSize 批处理大小
  * @returns 处理结果
  */
-export async function processSongs(songList: string, concurrency = 15, batchSize = 30) {
+export async function processSongs(songList: string, concurrency = 10, batchSize = 30) {
   try {
     console.log('开始处理歌曲列表，总行数:', songList.trim().split('\n').length);
     
     // 设置更长的超时时间，处理大量数据
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分钟超时
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 3分钟超时，增加前端等待时间
     
     const response = await fetch(`${API_BASE_URL}/api/process-songs`, {
       method: 'POST',
