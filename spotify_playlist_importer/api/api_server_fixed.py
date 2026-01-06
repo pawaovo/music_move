@@ -62,10 +62,7 @@ class PreflightCORSMiddleware(BaseHTTPMiddleware):
         # 处理非预检请求
         return await call_next(request)
 
-# 添加自定义中间件
-app.add_middleware(PreflightCORSMiddleware)
-
-# 配置CORS
+# 配置CORS（先添加，后执行）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -80,6 +77,9 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600,  # 预检请求缓存时间
 )
+
+# 添加自定义中间件（后添加，先执行，用于处理OPTIONS预检请求）
+app.add_middleware(PreflightCORSMiddleware)
 
 # 导入路由
 from .routes_fixed import router as spotify_router
