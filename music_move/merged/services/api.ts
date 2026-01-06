@@ -5,6 +5,36 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_
 // 修复API路径
 console.log('使用API基础URL:', API_BASE_URL);
 
+// Session ID 管理
+const SESSION_STORAGE_KEY = 'spotify_session_id';
+
+// 获取存储的 session_id
+function getStoredSessionId(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(SESSION_STORAGE_KEY);
+}
+
+// 存储 session_id
+function storeSessionId(sessionId: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+}
+
+// 清除 session_id
+function clearSessionId(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+// 从响应头中提取并存储 session_id
+function extractAndStoreSessionId(response: Response): void {
+  const sessionId = response.headers.get('X-Session-ID');
+  if (sessionId) {
+    storeSessionId(sessionId);
+    console.log('已存储 session_id:', sessionId);
+  }
+}
+
 // 错误处理工具
 function handleFetchError(error: any): string {
   console.error('API错误详情:', error);
@@ -132,15 +162,25 @@ async function handleApiResponse(response: Response) {
   return response.json();
 }
 
-// API请求通用选项
-const fetchOptions: RequestInit = {
-  headers: {
+// API请求通用选项 - 动态生成以包含 session_id
+function getFetchOptions(): RequestInit {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  },
-  mode: 'cors',
-  credentials: 'include', // 确保包含跨域请求的凭据（Cookie）
-};
+  };
+
+  // 添加 session_id 到请求头
+  const sessionId = getStoredSessionId();
+  if (sessionId) {
+    headers['X-Session-ID'] = sessionId;
+  }
+
+  return {
+    headers,
+    mode: 'cors',
+    credentials: 'include', // 同时保留 Cookie 支持作为备用
+  };
+}
 
 // 认证相关API
 
@@ -153,29 +193,32 @@ export async function checkAuthStatus(): Promise<AuthStatusResponse> {
     console.log('开始检查认证状态...');
     console.log('API基础URL:', API_BASE_URL);
     console.log('请求地址:', `${API_BASE_URL}/api/auth-status`);
-    
+    console.log('当前 session_id:', getStoredSessionId());
+
     // 增加重试机制
     let retries = 0;
     const maxRetries = 3;
     let lastError: any = null;
-    
+
     while (retries < maxRetries) {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth-status`, {
           method: 'GET',
-          ...fetchOptions,
-          credentials: 'include', // 确保包含跨域请求的凭据（Cookie）
+          ...getFetchOptions(),
         });
-        
+
+        // 从响应头中提取并存储 session_id
+        extractAndStoreSessionId(response);
+
         console.log('收到认证状态响应:', {
           status: response.status,
           statusText: response.statusText,
           headers: Object.fromEntries(response.headers.entries()),
         });
-        
+
         const data = await handleApiResponse(response);
         console.log('认证状态响应内容:', data);
-        
+
         // 直接使用API返回的格式，不再尝试访问data.data
         return {
           isAuthenticated: data.is_authenticated || false,
@@ -186,14 +229,14 @@ export async function checkAuthStatus(): Promise<AuthStatusResponse> {
         lastError = error;
         console.error(`检查认证状态失败 (尝试 ${retries + 1}/${maxRetries}):`, error);
         retries++;
-        
+
         // 在重试前等待一段时间
         if (retries < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, 1000 * retries));
         }
       }
     }
-    
+
     // 所有重试都失败
     console.error('检查认证状态多次失败:', lastError);
     return {
@@ -220,15 +263,18 @@ export async function checkAuthStatus(): Promise<AuthStatusResponse> {
 export async function getAuthUrl() {
   try {
     console.log('正在获取Spotify授权URL...');
-    
+
     const response = await fetch(`${API_BASE_URL}/api/auth-url`, {
       method: 'GET',
-      ...fetchOptions,
+      ...getFetchOptions(),
     });
-    
+
+    // 从响应头中提取并存储 session_id
+    extractAndStoreSessionId(response);
+
     const data = await handleApiResponse(response);
     console.log('授权URL响应:', data);
-    
+
     // 检查响应格式，确保我们能正确提取URL
     if (data && data.data && data.data.auth_url) {
       return data.data.auth_url;
@@ -252,9 +298,12 @@ export async function refreshToken() {
   try {
     const response = await fetch(`${API_BASE_URL}/api/refresh-token`, {
       method: 'POST',
-      ...fetchOptions,
+      ...getFetchOptions(),
     });
-    
+
+    // 从响应头中提取并存储 session_id
+    extractAndStoreSessionId(response);
+
     return await handleApiResponse(response);
   } catch (error) {
     console.error('刷新令牌失败:', error);
@@ -269,23 +318,23 @@ export async function refreshToken() {
 export async function logout() {
   try {
     console.log('调用登出API...');
-    
+
+    // 清除本地存储的 session_id
+    clearSessionId();
+
     // 在发起请求前清除浏览器中的相关Cookie（如果存在）
-    // 这不会完全清除后端设置的Cookie，但有助于处理某些边缘情况
     document.cookie.split(';').forEach(c => {
       const cookieName = c.trim().split('=')[0];
       if (cookieName.includes('spotify') || cookieName.includes('session')) {
         document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=none;`;
       }
     });
-    
+
     const response = await fetch(`${API_BASE_URL}/api/logout`, {
       method: 'POST',
-      ...fetchOptions,
-      // 确保携带凭证
-      credentials: 'include'
+      ...getFetchOptions(),
     });
-    
+
     // 即使后端返回错误状态码，也视为成功，因为前端已经清除了登录状态
     if (!response.ok) {
       console.warn(`登出API返回非成功状态码: ${response.status} - ${response.statusText}`);
@@ -323,14 +372,15 @@ export async function logout() {
 export async function processSongs(songList: string, concurrency = 10, batchSize = 30) {
   try {
     console.log('开始处理歌曲列表，总行数:', songList.trim().split('\n').length);
-    
+
     // 设置更长的超时时间，处理大量数据
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 180000); // 3分钟超时，增加前端等待时间
-    
+
+    const fetchOpts = getFetchOptions();
     const response = await fetch(`${API_BASE_URL}/api/process-songs`, {
       method: 'POST',
-      ...fetchOptions,
+      ...fetchOpts,
       body: JSON.stringify({
         song_list: songList,
         concurrency,
@@ -338,16 +388,19 @@ export async function processSongs(songList: string, concurrency = 10, batchSize
       }),
       signal: controller.signal
     });
-    
+
     // 清除超时计时器
     clearTimeout(timeoutId);
-    
+
+    // 从响应头中提取并存储 session_id
+    extractAndStoreSessionId(response);
+
     // 检查响应状态
     if (!response.ok) {
       console.error('处理歌曲API返回错误状态:', response.status, response.statusText);
       throw await handleResponseError(response);
     }
-    
+
     // 尝试解析响应
     let responseData;
     try {
@@ -357,10 +410,10 @@ export async function processSongs(songList: string, concurrency = 10, batchSize
       console.error('解析API响应失败:', parseError);
       throw new Error('解析服务器响应失败，可能是因为数据量过大。请尝试减少歌曲数量或分批处理。');
     }
-    
+
     // 标准化响应格式：处理可能的嵌套数据结构
     let result: ProcessSongsData;
-    
+
     if (responseData.data && (responseData.data.matched_songs || responseData.data.unmatched_songs)) {
       // 如果数据嵌套在data字段中
       console.log('API响应使用嵌套data结构');
@@ -378,27 +431,27 @@ export async function processSongs(songList: string, concurrency = 10, batchSize
         unmatched_songs: []
       };
     }
-    
+
     // 确保关键字段存在
     result.matched_songs = result.matched_songs || [];
     result.unmatched_songs = result.unmatched_songs || [];
     result.total_songs = result.total_songs || 0;
-    
+
     console.log('处理后的标准化数据结构:', {
       total_songs: result.total_songs,
       matched_songs_count: result.matched_songs.length,
       unmatched_songs_count: result.unmatched_songs.length
     });
-    
+
     return result;
   } catch (error: any) { // 使用any类型处理错误
     console.error('处理歌曲列表失败:', error);
-    
+
     // 处理AbortError（超时）
     if (error.name === 'AbortError') {
       throw new Error('处理歌曲请求超时。您的歌曲列表可能过大，请尝试减少歌曲数量或分批处理。');
     }
-    
+
     // 处理其他错误
     throw error instanceof Error ? error : new Error(handleFetchError(error));
   }
@@ -426,18 +479,21 @@ export async function createPlaylistAndAddSongs(
       description,
       uris
     };
-    
+
     console.log('创建播放列表参数:', requestData);
-    
+
     const response = await fetch(`${API_BASE_URL}/api/create-playlist`, {
       method: 'POST',
-      ...fetchOptions,
+      ...getFetchOptions(),
       body: JSON.stringify(requestData)
     });
-    
+
+    // 从响应头中提取并存储 session_id
+    extractAndStoreSessionId(response);
+
     const data = await handleApiResponse(response);
     console.log('创建播放列表响应:', data);
-    
+
     return {
       playlist_id: data.data.playlist_id,
       playlist_url: data.data.playlist_url,

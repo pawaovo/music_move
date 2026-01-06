@@ -39,6 +39,7 @@ router = APIRouter(prefix="/api", tags=["spotify", "auth"])
 
 # 定义认证相关的常量 (从 auth_routes.py 复制)
 SESSION_COOKIE_NAME = "spotify_session_id"
+SESSION_HEADER_NAME = "X-Session-ID"  # 新增：请求头中的 session_id 字段名
 SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30天
 
 # 新增请求模型定义 (从旧的 routes.py 迁移)
@@ -53,25 +54,36 @@ class CreatePlaylistRequest(BaseModel):
     public: bool = Field(False, description="是否公开")
     uris: List[str] = Field(..., description="Spotify曲目URI列表")
 
-# 获取或创建会话ID (从 auth_routes.py 复制)
+# 获取或创建会话ID - 优先从请求头读取，其次从 Cookie 读取
 async def get_or_create_session_id(
     request: Request,
     response: Response,
-    session_id: Optional[str] = Cookie(None, alias=SESSION_COOKIE_NAME)
+    session_id_cookie: Optional[str] = Cookie(None, alias=SESSION_COOKIE_NAME),
+    session_id_header: Optional[str] = Header(None, alias=SESSION_HEADER_NAME)
 ) -> str:
+    # 优先使用请求头中的 session_id（解决跨域 Cookie 问题）
+    session_id = session_id_header or session_id_cookie
+
     if not session_id:
         session_id = str(uuid.uuid4())
         logger.info(f"为用户创建新的会话ID: {session_id}")
-        # 在这里设置cookie
-        response.set_cookie(
-            key=SESSION_COOKIE_NAME,
-            value=session_id,
-            max_age=SESSION_COOKIE_MAX_AGE,
-            httponly=True,
-            samesite="none",  # 允许跨站请求
-            secure=True,      # 只在HTTPS连接中发送
-            domain=""       # 不限制域名，这样可以在任何域名下使用Cookie
-        )
+    else:
+        logger.info(f"使用现有会话ID: {session_id} (来源: {'请求头' if session_id_header else 'Cookie'})")
+
+    # 同时设置 Cookie（作为备用）
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_id,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="none",  # 允许跨站请求
+        secure=True,      # 只在HTTPS连接中发送
+        domain=""       # 不限制域名
+    )
+
+    # 在响应头中返回 session_id，方便前端获取并存储
+    response.headers["X-Session-ID"] = session_id
+
     return session_id
 
 # 定义简单的健康检查端点
